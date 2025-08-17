@@ -37,7 +37,7 @@ struct Graph{
 
     bool add_edge(int vert1, int vert2){
         if(vert1 <= last_vert && vert2 <= last_vert){
-            if(-1 != searchVec(arr[vert1], vert2) && -1 != searchVec(arr[vert2], vert1)){ // Verifica se a aresta ja existe
+            if(-1 == searchVec(arr[vert1], vert2) && -1 == searchVec(arr[vert2], vert1)){ // Verifica se a aresta ja existe
                 arr[vert1].push_back(vert2);
                 arr[vert2].push_back(vert1);
                 return true; // Aresta adicionada
@@ -83,6 +83,26 @@ struct Graph{
         std::cout << "last_vert = " << this->last_vert << "\n";
     }
 
+    // Prints the graph in a format recognized by https://csacademy.com/app/graph_editor/
+    void print_csacademy(){
+        for(int i=0; i<last_vert; i++){
+            std::cout << i << "\n";
+        }
+        for(int i=0; i<last_vert; i++){
+            int reps = arr[i].size();
+            for(int j=0; j<reps; j++){
+                std::cout << i << " " << arr[i].at(j) << "\n";
+            }
+        }
+    }
+
+    void print_raw(){
+        for(int i=0; i<last_vert; i++){
+            std::cout << i  << " ) ";
+            printVec(arr[i]);
+        }
+    }
+
     private:
 
     int searchVec(std::vector<int> v, int e){
@@ -97,4 +117,12 @@ struct Graph{
         return pos;
     }
 
+    void printVec(std::vector<int> v){
+        int reps = v.size();
+        std::cout << "| ";
+        for(int i=0; i<reps; i++){
+            std::cout << v.at(i) << " | ";
+        }
+        std::cout << "\n";
+    }
 };
