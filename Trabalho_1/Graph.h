@@ -1,24 +1,23 @@
 #include <iostream>
 #include <vector>
+#include <unordered_set>
+#include <unordered_map>
 
-struct Graph{
-    int n;
-    int last_vert;
-    std::vector<int>* arr;
+class Graph{
 
-    Graph(int n){
-        this->arr = new std::vector<int>[n];
-        this->n = n;
-        this->last_vert = 0;
-    }
+private:
+    int n; // maximum capacity
+    int last_vert; //current size
+    bool directed;
+    std::vector<std::unordered_set<int>> arr; //adjacency list
 
-    ~Graph(){
-        if(this->arr) delete[] this->arr;
-    }
+public:
+    //Constructor
+    Graph(int n, bool directed = false)
+     : n(n), last_vert(0), directed(directed), arr(n) {}
 
-    void all_verts(){
-        while(add_vert()); // Adicionar todos os vertices possiveis
-    }
+    //Destructor
+    ~Graph() = default;
 
     bool add_vert(){
         if(last_vert < n){
@@ -28,18 +27,27 @@ struct Graph{
         else return false;
     }
 
-    std::vector<int> vert_neighbors(int vert){
+    void all_verts(){
+        while(add_vert()); // Adicionar todos os vertices possiveis
+    }
+
+    std::unordered_set<int> vert_neighbors(int vert) {
         if(vert <= last_vert){
             return arr[vert];
         }
-        else return {};
+        else {
+            static std::unordered_set<int> empty;
+            return empty; // maybe error would be better here ??
+        }
     }
 
     bool add_edge(int vert1, int vert2){
         if(vert1 <= last_vert && vert2 <= last_vert){
-            if(-1 == searchVec(arr[vert1], vert2) && -1 == searchVec(arr[vert2], vert1)){ // Verifica se a aresta ja existe
-                arr[vert1].push_back(vert2);
-                arr[vert2].push_back(vert1);
+            if(arr[vert1].count(vert2) == 0){ // Verifica se a aresta ja existe
+                arr[vert1].insert(vert2);
+                if (!directed) {
+                    arr[vert2].insert(vert1);
+                }
                 return true; // Aresta adicionada
             }
             else return false; // Vertices validos, mas ja ha aresta
@@ -49,29 +57,21 @@ struct Graph{
 
     bool check_edge(int vert1, int vert2){
         if(vert1 <= last_vert && vert2 <= last_vert){
-            if(-1 != searchVec(arr[vert1], vert2) && -1 != searchVec(arr[vert2], vert1)){ // Verifica se a aresta existe
-                return true;
+            if (!directed) {
+                return (arr[vert1].count(vert2) > 0) && (arr[vert2].count(vert1) > 0);
             }
-            else return false; // Vertices validos, aresta inexistente
+            else {
+                return (arr[vert1].count(vert2) > 0);
+            }
         }
         else return false; // Vertices invalidos
     }
 
     bool remove_edge(int vert1, int vert2){
         if(check_edge(vert1, vert2)){
-            int reps = arr[vert1].size();
-            for(int i=0; i<reps; i++){
-                if(arr[vert1].at(i) == vert2){
-                    arr[vert1].erase(arr[vert1].begin() + i);
-                    i = reps;
-                }
-            }
-            reps = arr[vert2].size();
-            for(int i=0; i<reps; i++){
-                if(arr[vert2].at(i) == vert1){
-                    arr[vert2].erase(arr[vert2].begin() + i);
-                    i = reps;
-                }
+            arr[vert1].erase(vert2);
+            if (!directed) {
+                arr[vert2].erase(vert1);
             }
             return true;
         }
@@ -89,9 +89,8 @@ struct Graph{
             std::cout << i << "\n";
         }
         for(int i=0; i<last_vert; i++){
-            int reps = arr[i].size();
-            for(int j=0; j<reps; j++){
-                std::cout << i << " " << arr[i].at(j) << "\n";
+            for(int neighbor : arr[i]){
+                std::cout << i << " " << neighbor << "\n";
             }
         }
     }
@@ -104,25 +103,113 @@ struct Graph{
     }
 
     private:
-
-    int searchVec(std::vector<int> v, int e){
-        int pos = -1,
-            reps = v.size();
-        for(int i=0; i<reps; i++){
-            if(v[i] == e){
-                pos = i;
-                i = reps;
-            }
-        }
-        return pos;
-    }
-
-    void printVec(std::vector<int> v){
+    
+    void printVec(std::unordered_set<int> v){
         int reps = v.size();
         std::cout << "| ";
-        for(int i=0; i<reps; i++){
-            std::cout << v.at(i) << " | ";
+        for(int neighbor : v){
+            std::cout << neighbor << " | ";
         }
         std::cout << "\n";
     }
+};
+
+
+class WeightedGraph{
+
+    private:
+        int n; // maximum capacity
+        int last_vert; //current size
+        bool directed; 
+        std::vector<std::unordered_map<int, double>> arr; //adjacency list
+    
+    public:
+        //Constructor
+        WeightedGraph(int n, bool directed = false)
+            : n(n), last_vert(0), directed(directed), arr(n) {}
+
+        //Destructor
+        ~WeightedGraph() = default;
+    
+        bool add_vert() {
+            if (last_vert < n) {
+                last_vert++;
+                return true;
+            }
+            return false;
+        }
+
+        void all_verts(){
+            while(add_vert()); // Adicionar todos os vertices possiveis
+        }
+    
+        bool add_edge(int vert1, int vert2, double weight){
+            if(vert1 <= last_vert && vert2 <= last_vert){
+                if(arr[vert1].count(vert2) == 0){ // Verifica se a aresta ja existe
+                    arr[vert1][vert2] = weight;
+                    if (!directed) {
+                        arr[vert2][vert1] = weight;
+                    }
+                    return true; // Aresta adicionada
+                }
+                else return false; // Vertices validos, mas ja ha aresta
+            }
+            else return false; // Vertices invalidos
+        }
+    
+        bool check_edge(int vert1, int vert2){
+            if(vert1 <= last_vert && vert2 <= last_vert){
+                if (!directed) {
+                    return (arr[vert1].count(vert2) > 0) && (arr[vert2].count(vert1) > 0);
+                }
+                else {
+                    return (arr[vert1].count(vert2) > 0);
+                }
+            }
+            else return false; // Vertices invalidos
+        }
+
+
+    bool remove_edge(int vert1, int vert2){
+        if(check_edge(vert1, vert2)){
+            arr[vert1].erase(vert2);
+            if (!directed) {
+                arr[vert2].erase(vert1);
+            }
+            return true;
+        }
+        else return false;
+    }
+
+    std::unordered_map<int, double> vert_neighbors(int vert) {
+        if(vert <= last_vert){
+            return arr[vert];
+        }
+        else {
+            static std::unordered_map<int, double> empty;
+            return empty; // maybe error would be better here ??
+        }
+    }
+
+    void print_csacademy() const {
+        for (int i = 0; i < last_vert; i++) {
+            std::cout << i << "\n";
+        }
+        for (int i = 0; i < last_vert; i++) {
+            for (auto [neighbor, weight] : arr[i]) {
+                std::cout << i << " " << neighbor << "\n";
+            }
+        }
+    }
+
+    void print_raw() const {
+        for (int i = 0; i < last_vert; i++) {
+            std::cout << i << " ) | ";
+            for (auto [neighbor, weight] : arr[i]) {
+                std::cout << neighbor << "(" << weight << ") | ";
+            }
+            std::cout << "\n";
+        }
+    }
+
 };
