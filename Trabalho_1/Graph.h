@@ -3,15 +3,17 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#define ERROR 505
+
 class Graph{
 
-private:
+	private:
     int n; // maximum capacity
     int last_vert; //current size
     bool directed;
     std::vector<std::unordered_set<int>> arr; //adjacency list
 
-public:
+	public:
     //Constructor
     Graph(int n, bool directed = false)
      : n(n), last_vert(0), directed(directed), arr(n) {}
@@ -36,8 +38,7 @@ public:
             return arr[vert];
         }
         else {
-            static std::unordered_set<int> empty;
-            return empty; // maybe error would be better here ??
+			throw (ERROR);
         }
     }
 
@@ -105,7 +106,6 @@ public:
     private:
     
     void printVec(std::unordered_set<int> v){
-        int reps = v.size();
         std::cout << "| ";
         for(int neighbor : v){
             std::cout << neighbor << " | ";
@@ -186,8 +186,7 @@ class WeightedGraph{
             return arr[vert];
         }
         else {
-            static std::unordered_map<int, double> empty;
-            return empty; // maybe error would be better here ??
+			throw (ERROR);
         }
     }
 
