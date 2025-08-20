@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -12,11 +13,12 @@ class Graph{
     int last_vert; //current size
     bool directed;
     std::vector<std::unordered_set<int>> arr; //adjacency list
+	std::vector<std::string> label;
 
 	public:
     //Constructor
     Graph(int n, bool directed = false)
-     : n(n), last_vert(0), directed(directed), arr(n) {}
+     : n(n), last_vert(0), directed(directed), arr(n), label(n) {}
 
     //Destructor
     ~Graph() = default;
@@ -28,6 +30,32 @@ class Graph{
         }
         else return false;
     }
+
+    bool add_vert(std::string label){
+        if(last_vert < n){
+			this->label[last_vert] = label;
+            last_vert++;
+            return true;
+        }
+        else return false;
+    }
+
+	void setLabel(int vert, std::string label)
+	{
+		if (vert <= last_vert)
+		{
+			this->label[last_vert] = label;
+		}
+	}
+
+	std::string getLabel(int vert)
+	{
+		if (vert <= last_vert)
+		{
+			return (this->label[last_vert]);
+		}
+		else return "";
+	}
 
     void all_verts(){
         while(add_vert()); // Adicionar todos os vertices possiveis
@@ -97,8 +125,16 @@ class Graph{
     }
 
     void print_raw(){
-        for(int i=0; i<last_vert; i++){
-            std::cout << i  << " ) ";
+        for(int i=0; i<last_vert; i++) 
+		{
+			if (label[last_vert] != "")
+			{
+				std::cout << i << " ) ";
+			}
+			else
+			{
+				std::cout << i << " : " << label[i] << " ) ";
+			}
             printVec(arr[i]);
         }
     }
@@ -122,11 +158,12 @@ class WeightedGraph{
         int last_vert; //current size
         bool directed; 
         std::vector<std::unordered_map<int, double>> arr; //adjacency list
+		std::vector<std::string> label;
     
     public:
         //Constructor
         WeightedGraph(int n, bool directed = false)
-            : n(n), last_vert(0), directed(directed), arr(n) {}
+            : n(n), last_vert(0), directed(directed), arr(n), label(n) {}
 
         //Destructor
         ~WeightedGraph() = default;
@@ -134,6 +171,14 @@ class WeightedGraph{
         bool add_vert() {
             if (last_vert < n) {
                 last_vert++;
+                return true;
+            }
+            return false;
+        }
+
+        bool add_vert(std::string label) {
+            if (last_vert < n) {
+				this->label[last_vert++] = label;
                 return true;
             }
             return false;
@@ -203,7 +248,14 @@ class WeightedGraph{
 
     void print_raw() const {
         for (int i = 0; i < last_vert; i++) {
-            std::cout << i << " ) | ";
+			if (label[i] != "")
+			{
+				std::cout << i << " : " << label[i] << " ) | ";
+			}
+			else
+			{
+				std::cout << i << " ) | ";
+			}
             for (auto [neighbor, weight] : arr[i]) {
                 std::cout << neighbor << "(" << weight << ") | ";
             }
