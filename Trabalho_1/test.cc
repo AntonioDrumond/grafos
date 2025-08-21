@@ -106,12 +106,21 @@ void test_neighbors() {
 int main (int argc, char *argv[]) {
     
    
+
 	/*
     WeightedGraph* g = new WeightedGraph(10);
     g->add_vert();
     g->add_vert("aa");
     g->add_vert();
     g->add_vert();
+	std::cout << g->getLabel(2) << "\n";
+	try
+	{
+		std::cout << g->getLabel(5) << "\n";
+	}
+	catch (const std::invalid_argument& ex)
+	{
+	}
     
     g->add_edge(0 , 1, 0.5);
     g->add_edge(1 , 2, 0.5);
@@ -127,10 +136,11 @@ int main (int argc, char *argv[]) {
 
 
 
+
    test_add_vertex();
    test_add_edge();
    test_remove_edge();
    test_neighbors();
    std::cout << "All test ok ✅\n";
-   return 0;
+   return (0);
 }

@@ -1,14 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include <unordered_set>
 #include <unordered_map>
-
-#define ERROR 505
 
 class Graph{
 
 	private:
+
     int n; // maximum capacity
     int last_vert; //current size
     bool directed;
@@ -16,6 +16,7 @@ class Graph{
 	std::vector<std::string> label;
 
 	public:
+
     //Constructor
     Graph(int n, bool directed = false)
      : n(n), last_vert(0), directed(directed), arr(n), label(n) {}
@@ -44,7 +45,11 @@ class Graph{
 	{
 		if (vert <= last_vert)
 		{
-			this->label[last_vert] = label;
+			this->label[vert] = label;
+		}
+		else
+		{
+			throw std::invalid_argument("Vertex does not exist");
 		}
 	}
 
@@ -52,9 +57,12 @@ class Graph{
 	{
 		if (vert <= last_vert)
 		{
-			return (this->label[last_vert]);
+			return (this->label[vert]);
 		}
-		else return "";
+		else
+		{
+			throw std::invalid_argument("Vertex does not exist");
+		}
 	}
 
     void all_verts(){
@@ -66,7 +74,7 @@ class Graph{
             return arr[vert];
         }
         else {
-			throw (ERROR);
+			throw std::invalid_argument("Vertex does not exist");
         }
     }
 
@@ -154,65 +162,91 @@ class Graph{
 class WeightedGraph{
 
     private:
-        int n; // maximum capacity
-        int last_vert; //current size
-        bool directed; 
-        std::vector<std::unordered_map<int, double>> arr; //adjacency list
-		std::vector<std::string> label;
-    
-    public:
-        //Constructor
-        WeightedGraph(int n, bool directed = false)
-            : n(n), last_vert(0), directed(directed), arr(n), label(n) {}
 
-        //Destructor
-        ~WeightedGraph() = default;
-    
-        bool add_vert() {
-            if (last_vert < n) {
-                last_vert++;
-                return true;
-            }
-            return false;
-        }
+	int n; // maximum capacity
+	int last_vert; //current size
+	bool directed; 
+	std::vector<std::unordered_map<int, double>> arr; //adjacency list
+	std::vector<std::string> label;
 
-        bool add_vert(std::string label) {
-            if (last_vert < n) {
-				this->label[last_vert++] = label;
-                return true;
-            }
-            return false;
-        }
+	public:
 
-        void all_verts(){
-            while(add_vert()); // Adicionar todos os vertices possiveis
-        }
-    
-        bool add_edge(int vert1, int vert2, double weight){
-            if(vert1 <= last_vert && vert2 <= last_vert){
-                if(arr[vert1].count(vert2) == 0){ // Verifica se a aresta ja existe
-                    arr[vert1][vert2] = weight;
-                    if (!directed) {
-                        arr[vert2][vert1] = weight;
-                    }
-                    return true; // Aresta adicionada
-                }
-                else return false; // Vertices validos, mas ja ha aresta
-            }
-            else return false; // Vertices invalidos
-        }
-    
-        bool check_edge(int vert1, int vert2){
-            if(vert1 <= last_vert && vert2 <= last_vert){
-                if (!directed) {
-                    return (arr[vert1].count(vert2) > 0) && (arr[vert2].count(vert1) > 0);
-                }
-                else {
-                    return (arr[vert1].count(vert2) > 0);
-                }
-            }
-            else return false; // Vertices invalidos
-        }
+	//Constructor
+	WeightedGraph(int n, bool directed = false)
+		: n(n), last_vert(0), directed(directed), arr(n), label(n) {}
+
+	//Destructor
+	~WeightedGraph() = default;
+
+	bool add_vert() {
+		if (last_vert < n) {
+			last_vert++;
+			return true;
+		}
+		return false;
+	}
+
+	bool add_vert(std::string label) {
+		if (last_vert < n) {
+			this->label[last_vert++] = label;
+			return true;
+		}
+		return false;
+	}
+
+	void setLabel(int vert, std::string label)
+	{
+		if (vert <= last_vert)
+		{
+			this->label[vert] = label;
+		}
+		else
+		{
+			throw std::invalid_argument("Vertex does not exist");
+		}
+	}
+
+	std::string getLabel(int vert)
+	{
+		if (vert <= last_vert)
+		{
+			return (this->label[vert]);
+		}
+		else
+		{
+			throw std::invalid_argument("Vertex does not exist");
+		}
+	}
+
+	void all_verts(){
+		while(add_vert()); // Adicionar todos os vertices possiveis
+	}
+
+	bool add_edge(int vert1, int vert2, double weight){
+		if(vert1 <= last_vert && vert2 <= last_vert){
+			if(arr[vert1].count(vert2) == 0){ // Verifica se a aresta ja existe
+				arr[vert1][vert2] = weight;
+				if (!directed) {
+					arr[vert2][vert1] = weight;
+				}
+				return true; // Aresta adicionada
+			}
+			else return false; // Vertices validos, mas ja ha aresta
+		}
+		else return false; // Vertices invalidos
+	}
+
+	bool check_edge(int vert1, int vert2){
+		if(vert1 <= last_vert && vert2 <= last_vert){
+			if (!directed) {
+				return (arr[vert1].count(vert2) > 0) && (arr[vert2].count(vert1) > 0);
+			}
+			else {
+				return (arr[vert1].count(vert2) > 0);
+			}
+		}
+		else return false; // Vertices invalidos
+	}
 
 
     bool remove_edge(int vert1, int vert2){
@@ -231,7 +265,7 @@ class WeightedGraph{
             return arr[vert];
         }
         else {
-			throw (ERROR);
+			throw std::invalid_argument("Vertex does not exist");
         }
     }
 
