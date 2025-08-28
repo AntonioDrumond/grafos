@@ -226,8 +226,8 @@ class WeightedGraph{
 	bool add_edge(int vert1, int vert2, double weight){
 		if(vert1 <= last_vert && vert2 <= last_vert){
 
-			// Verifica se a aresta ja existe
-			if ( (arr[vert1].count(vert2) == 0) || (std::count(arr[vert1][vert2].begin(), arr[vert1][vert2].end (), weight) == 0 ))
+			// Verifica se a aresta ja existe ou se esse peso ja existe
+			if ( (arr[vert1].count(vert2) == 0) || (std::count(arr[vert1][vert2].begin(), arr[vert1][vert2].end (), weight) == 0) )
 			{ 
 				arr[vert1][vert2].push_back(weight);
 				if (!directed) {
@@ -250,17 +250,6 @@ class WeightedGraph{
 			}
 		}
 		else return false; // Vertices invalidos
-	}
-
-	int count_weight(int vert1, int vert2, double weight)
-	{
-		int count = 0;
-		if (check_edge(vert1, vert2))
-		{
-			std::vector<double> weight_list = arr[vert1][vert2];  
-			count = std::count(weight_list.begin(), weight_list.end(), weight);
-		}
-		return (count);
 	}
 
     bool remove_edge(int vert1, int vert2)
