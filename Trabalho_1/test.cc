@@ -57,7 +57,7 @@ void test_add_edge() {
     std::cout << "add_edge & check_edge for directed not weighted : OK\n";
 }
 
-void test_remove_edge() {
+void test_remove_edges() {
     Graph g1(5);
     g1.all_verts();
     g1.add_edge(0, 1);
@@ -72,7 +72,11 @@ void test_remove_edge() {
     g.all_verts();
     g.add_edge(0, 1, 1.5);
     g.add_edge(1, 2, 2.5);
+    g.add_edge(2, 1, 4.5);
     assert(g.remove_edge(0, 1) == true);
+    assert(g.remove_edge(2, 1, 2.0) == false);
+    assert(g.remove_edge(2, 1, 2.5) == true);
+    assert(g.remove_edge(2, 1, 4.5) == true);
     assert(g.check_edge(0, 1) == false);
     assert(g.check_edge(1, 0) == false);
     assert(g.remove_edge(0, 1) == false); // should not work as its already gone
@@ -122,16 +126,15 @@ int main (int argc, char *argv[]) {
 	catch (const std::invalid_argument& ex)
 	{
 	}
-    
     g->add_edge(0 , 1, 0.5);
     g->add_edge(1 , 2, 0.5);
     g->add_edge(0 , 2, 0.5);
     g->add_edge(3 , 2, 0.5);
-    g->add_edge(3 , 2, 0.5);
+    g->add_edge(3 , 2, 0.6);
     //if(g->check_edge(4, 2)) std::cout << "yes\n";
     //else std::cout << "no\n";
 //	    g->print_csacademy();
-    g->print_raw();
+//	    g->print_raw();
     delete g;
     return 0;
 	*/
@@ -139,7 +142,7 @@ int main (int argc, char *argv[]) {
 
    test_add_vertex();
    test_add_edge();
-   test_remove_edge();
+   test_remove_edges();
    test_neighbors();
    std::cout << "All test ok ✅\n";
    return (0);

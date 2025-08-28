@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <typeinfo>
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
@@ -252,16 +253,66 @@ class WeightedGraph{
 		else return false; // Vertices invalidos
 	}
 
+	int count_weight(int vert1, int vert2, double weight)
+	{
+		int count = 0;
+		if (check_edge(vert1, vert2))
+		{
+			std::vector<double> weight_list = arr[vert1][vert2];  
+			count = std::count(weight_list.begin(), weight_list.end(), weight);
+		}
+		return (count);
+	}
 
-    bool remove_edge(int vert1, int vert2){
-        if(check_edge(vert1, vert2)){
-            arr[vert1].erase(vert2);
-            if (!directed) {
-                arr[vert2].erase(vert1);
-            }
-            return true;
+    bool remove_edge(int vert1, int vert2)
+	{
+		if (check_edge(vert1, vert2))
+		{
+			arr[vert1].erase(vert2);
+			if (!directed) {
+				arr[vert2].erase(vert1);
+			}
+			return true;
+		}
+		else return false;
+	}
+
+    bool remove_edge(int vert1, int vert2, double weight) 
+	{
+        if(check_edge(vert1, vert2)) 
+		{
+			if (arr[vert1][vert2].size() > 1)
+			{
+				std::vector<double>* weight_list = &arr[vert1][vert2];
+				auto it = std::find(weight_list->begin(), weight_list->end(), weight);
+
+				if (it != weight_list->end())
+				{
+					*it = weight_list->back();
+					weight_list->pop_back();
+				}
+				else return false; // There is no edge with the given weight
+
+				if (!directed)
+				{
+					std::vector<double>* weight_list = &arr[vert2][vert1];
+					auto it = std::find(weight_list->begin(), weight_list->end(), weight);
+
+					*it = weight_list->back();	 	// Assuming that the weight was found based on the previous check
+					weight_list->pop_back();
+				}
+				return true;
+			}
+			else if (arr[vert1][vert2][0] == weight)
+			{
+				arr[vert1].erase(vert2);
+				if (!directed) {
+					arr[vert2].erase(vert1);
+				}
+				return true;
+			}
         }
-        else return false;
+        return false;
     }
 
     std::unordered_map<int, std::vector<double>> vert_neighbors(int vert) {
