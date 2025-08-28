@@ -21,7 +21,8 @@ void test_add_edge() {
     WeightedGraph g1(5); // undirected 
     g1.all_verts();
     assert(g1.add_edge(0, 1, 1.5) == true);
-    assert(g1.add_edge(0, 1, 2.0) == false); // already exists
+    assert(g1.add_edge(0, 1, 1.5) == false); // weight already exists
+    assert(g1.add_edge(0, 1, 2.0) == true); // new weight 
     assert(g1.check_edge(0, 1) == true);
     assert(g1.check_edge(1, 0) == true);
     assert(g1.check_edge(0, 2) == false);
@@ -30,7 +31,8 @@ void test_add_edge() {
     WeightedGraph g2(5, true); // directed 
     g2.all_verts();
     assert(g2.add_edge(0, 1, 1.5) == true);
-    assert(g2.add_edge(0, 1, 2.0) == false); // already exists
+    assert(g2.add_edge(0, 1, 1.5) == false); // weight already exists
+    assert(g2.add_edge(0, 1, 2.0) == true); // new weight
     assert(g2.check_edge(0, 1) == true);
     assert(g2.check_edge(1, 0) == false);
     assert(g2.check_edge(0, 2) == false);
@@ -97,8 +99,8 @@ void test_neighbors() {
 
     auto neighbors = g2.vert_neighbors(0);
     assert(neighbors.size() == 2);
-    assert(neighbors.at(1) == 1.5);
-    assert(neighbors.at(2) == 2.5);
+    assert(neighbors.at(1)[0] == 1.5);
+    assert(neighbors.at(2)[0] == 2.5);
 
     std::cout << "neighbors undirected weighted : OK\n";
 }
@@ -106,7 +108,6 @@ void test_neighbors() {
 int main (int argc, char *argv[]) {
     
    
-
 	/*
     WeightedGraph* g = new WeightedGraph(10);
     g->add_vert();
@@ -126,6 +127,7 @@ int main (int argc, char *argv[]) {
     g->add_edge(1 , 2, 0.5);
     g->add_edge(0 , 2, 0.5);
     g->add_edge(3 , 2, 0.5);
+    g->add_edge(3 , 2, 0.5);
     //if(g->check_edge(4, 2)) std::cout << "yes\n";
     //else std::cout << "no\n";
 //	    g->print_csacademy();
@@ -133,8 +135,6 @@ int main (int argc, char *argv[]) {
     delete g;
     return 0;
 	*/
-
-
 
 
    test_add_vertex();

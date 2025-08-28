@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -141,7 +142,7 @@ class Graph{
 			}
 			else
 			{
-				std::cout << i << " : " << label[i] << " ) ";
+				std::cout << i << " : \"" << label[i] << "\" ) ";
 			}
             printVec(arr[i]);
         }
@@ -166,7 +167,7 @@ class WeightedGraph{
 	int n; // maximum capacity
 	int last_vert; //current size
 	bool directed; 
-	std::vector<std::unordered_map<int, double>> arr; //adjacency list
+	std::vector<std::unordered_map<int, std::vector<double>>> arr; //adjacency list
 	std::vector<std::string> label;
 
 	public:
@@ -224,14 +225,17 @@ class WeightedGraph{
 
 	bool add_edge(int vert1, int vert2, double weight){
 		if(vert1 <= last_vert && vert2 <= last_vert){
-			if(arr[vert1].count(vert2) == 0){ // Verifica se a aresta ja existe
-				arr[vert1][vert2] = weight;
+
+			// Verifica se a aresta ja existe
+			if ( (arr[vert1].count(vert2) == 0) || (std::count(arr[vert1][vert2].begin(), arr[vert1][vert2].end (), weight) == 0 ))
+			{ 
+				arr[vert1][vert2].push_back(weight);
 				if (!directed) {
-					arr[vert2][vert1] = weight;
+					arr[vert2][vert1].push_back(weight);
 				}
 				return true; // Aresta adicionada
 			}
-			else return false; // Vertices validos, mas ja ha aresta
+			else return false; // Vertices validos, mas ja ha aresta ou peso
 		}
 		else return false; // Vertices invalidos
 	}
@@ -260,7 +264,7 @@ class WeightedGraph{
         else return false;
     }
 
-    std::unordered_map<int, double> vert_neighbors(int vert) {
+    std::unordered_map<int, std::vector<double>> vert_neighbors(int vert) {
         if(vert <= last_vert){
             return arr[vert];
         }
@@ -284,14 +288,21 @@ class WeightedGraph{
         for (int i = 0; i < last_vert; i++) {
 			if (label[i] != "")
 			{
-				std::cout << i << " : " << label[i] << " ) | ";
+				std::cout << i << " : \"" << label[i] << "\" ) | ";
 			}
 			else
 			{
 				std::cout << i << " ) | ";
 			}
-            for (auto [neighbor, weight] : arr[i]) {
-                std::cout << neighbor << "(" << weight << ") | ";
+            for (auto [neighbor, weight_list] : arr[i]) {
+                std::cout << neighbor << "{";
+				int n = weight_list.size();
+				std::cout << weight_list[0];
+				for (int i = 1; i < n; i++)
+				{
+					std::cout << ", " << weight_list[i];
+				}
+				std::cout << "} | ";
             }
             std::cout << "\n";
         }
