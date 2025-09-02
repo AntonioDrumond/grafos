@@ -109,6 +109,46 @@ void test_neighbors() {
     std::cout << "neighbors undirected weighted : OK\n";
 }
 
+void test_empty_graph() {
+    std::cout << "Testing empty graph...\n";
+    Graph empty_g(0);
+    assert(empty_g.add_vert() == false);
+    assert(empty_g.check_edge(0, 1) == false);
+    std::cout << "Empty graph edge cases: OK\n";
+}
+
+void test_single_node_graph() {
+    std::cout << "Testing single node graph...\n";
+    Graph single_g(1);
+    assert(single_g.add_vert() == true);
+    assert(single_g.add_edge(0, 0) == true); // self-loop if allowed
+    assert(single_g.check_edge(0, 0) == true);
+    std::cout << "Single node graph: OK\n";
+}
+
+void test_invalid_vertex_access() {
+    std::cout << "Testing invalid vertex access...\n";
+    Graph single_g(1);
+    single_g.add_vert();
+    try {
+        single_g.add_edge(0, 2);
+        std::cout << "Error: Exception not thrown for invalid vertex!\n";
+    } catch (const std::exception& e) {
+        std::cout << "Caught exception as expected: " << e.what() << "\n";
+    }
+}
+
+void test_large_graph_performance() {
+    std::cout << "Testing large graph performance...\n";
+    const int N = 1000;
+    Graph large_g(N);
+    for (int i = 0; i < N; ++i) large_g.add_vert();
+    for (int i = 0; i < N - 1; ++i) large_g.add_edge(i, i + 1);
+    assert(large_g.check_edge(0, 1) == true);
+    assert(large_g.check_edge(N - 2, N - 1) == true);
+    std::cout << "Large graph test: OK\n";
+}
+
 int main (int argc, char *argv[]) {
     
    
@@ -139,11 +179,14 @@ int main (int argc, char *argv[]) {
     return 0;
 	*/
 
-
-   test_add_vertex();
-   test_add_edge();
-   test_remove_edges();
-   test_neighbors();
-   std::cout << "All test ok ✅\n";
-   return (0);
+    test_add_vertex();
+    test_add_edge();
+    test_remove_edge();
+    test_neighbors();
+    test_empty_graph();
+    test_single_node_graph();
+    test_invalid_vertex_access();
+    test_large_graph_performance();
+    std::cout << "All tests passed ✅\n";
+    return 0;
 }
