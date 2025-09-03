@@ -57,7 +57,7 @@ void test_add_edge() {
     std::cout << "add_edge & check_edge for directed not weighted : OK\n";
 }
 
-void test_remove_edges() {
+void test_remove_edge() {
     Graph g1(5);
     g1.all_verts();
     g1.add_edge(0, 1);
@@ -130,11 +130,10 @@ void test_invalid_vertex_access() {
     std::cout << "Testing invalid vertex access...\n";
     Graph single_g(1);
     single_g.add_vert();
-    try {
-        single_g.add_edge(0, 2);
-        std::cout << "Error: Exception not thrown for invalid vertex!\n";
-    } catch (const std::exception& e) {
-        std::cout << "Caught exception as expected: " << e.what() << "\n";
+    if (single_g.add_edge(0, 2)) {
+        std::cout << "Error: An invalid vertex access ocurred!\n";
+    } else {
+        std::cout << "Invalid vertex access handle: OK\n";
     }
 }
 
@@ -151,7 +150,6 @@ void test_large_graph_performance() {
 
 int main (int argc, char *argv[]) {
     
-   
 	/*
     WeightedGraph* g = new WeightedGraph(10);
     g->add_vert();
