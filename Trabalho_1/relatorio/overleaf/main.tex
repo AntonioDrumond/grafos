@@ -1,0 +1,371 @@
+\documentclass{sbc2023}%
+
+\usepackage[portuguese]{babel}
+\selectlanguage{portuguese}
+
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[misc,geometry]{ifsym} 
+\usepackage{fontspec}
+\usepackage{fontawesome}
+\usepackage{academicons}
+\usepackage{color}
+\usepackage{hyperref} 
+\usepackage{aas_macros}
+\usepackage[bottom]{footmisc}
+\usepackage{supertabular}
+\usepackage{afterpage}
+\usepackage{url}
+\usepackage{pifont}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{booktabs} 
+\usepackage{xcolor}
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+
+\setcitestyle{square}
+
+\definecolor{orcidlogo}{rgb}{0.37,0.48,0.13}
+\definecolor{unilogo}{rgb}{0.16, 0.26, 0.58}
+\definecolor{maillogo}{rgb}{0.58, 0.16, 0.26}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.0}
+\hypersetup{colorlinks,breaklinks,
+            linkcolor=darkblue,urlcolor=darkblue,
+            anchorcolor=darkblue,citecolor=darkblue}
+%\hypersetup{colorlinks,citecolor=blue,linkcolor=blue,urlcolor=blue}
+
+%%%%%%% IMPORTANT: We disable hyperlinks by default with this line, to avoid the error "\pdfendlink ended up in different nesting level" while writing.
+%\hypersetup{draft}
+
+\jid{JBCS}
+\jtitle{Trabalho da disciplina Fundamentos de Grafos }
+\doi{}
+\jyear{}
+
+
+\title[Grafos em C++: Implementação e Avaliação de Listas de Adjacência]{Grafos em C++: Implementação e Avaliação de Listas de Adjacência}
+
+% THE ORCID IS MANDATORY FOR EACH AUTHOR IN JBCS
+\author[]{
+
+\affil{\textbf{Vitor de Meira Gomes}~
+\href{https://orcid.org/0009-0004-6255-2406}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:vitormeiragomes@outlook.com}{\textbf{\textit{vitormeiragomes@outlook.com}}}~]}
+
+\affil{\textbf{Antônio Drumond Cota de Sousa}~
+\href{https://orcid.org/0009-0009-2053-8151}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:antonio.drumondcs@gmail.com}{\textbf{\textit{antonio.drumondcs@gmail.com}}}~]}
+
+\affil{\textbf{Achille Guérard}~
+\href{https://orcid.org/0000-0000-0000-0000}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas/EPITA}~|~\href{mailto:achille.guerard15@gmail.com}{\textbf{\textit{achille.guerard15@gmail.com}}}~]}
+
+\affil{\textbf{Laura Menezes Heráclito Alves}~
+\href{https://orcid.org/0009-0009-1718-8250}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:laura.heraclito@gmail.com}{\textbf{\textit{laura.heraclito@gmail.com}}}~]}
+
+\affil{\textbf{Davi Ferreira Puddo}~
+\href{https://orcid.org/0009-0002-7023-1034}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:davifpuddo@gmail.com}{\textbf{\textit{davifpuddo@gmail.com}}}~]}
+}
+
+
+\begin{document}
+
+\begin{frontmatter}
+\maketitle
+
+\begin{mail}
+Pontifícia Universidade Católica de Minas Gerais, R. Dom José Gaspar, 500, Coração Eucarístico, 30535-901, Belo Horizonte, MG, Brazil.
+\end{mail}
+
+
+\begin{abstract}
+\textbf{Abstract.~}
+\noindent Este trabalho apresenta a implementação de grafos direcionados e não direcionados, com e sem pesos,com foco na representação por listas de adjacência, desenvolvida no âmbito da disciplina de Teoria de Grafos. A proposta é baseada na análise experimental com recorte específico sobre operações fundamentais e complexidade algorítmica, permitindo validação empírica das decisões de implementação e dos resultados teóricos esperados.
+\end{abstract}
+
+\begin{keywords}
+Implementação de Grafos, Lista de Adjacências, C++, Complexidade Algorítmica, Análise de Desempenho
+\end{keywords}
+
+%\begin{license}
+%Published under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0)
+%\end{license}
+
+\end{frontmatter}
+
+
+\section{Introdução}
+\label{sec:intro}
+
+Este trabalho apresenta a implementação de grafos direcionados e não direcionados, com e sem pesos, desenvolvida como parte dos requisitos da disciplina de Teoria de Grafos. A atividade é inserida no contexto de um projeto acadêmico voltado para a consolidação de conhecimentos em teoria dos grafos e, além disso, para o desenvolvimento de habilidades em implementação eficiente de algoritmos clássicos. Por sua vez, a implementação foi realizada integralmente em C++, aproveitando os recursos oferecidos pela Standard Template Library (STL) para garantir tanto eficiência computacional quanto clareza na organização do código.
+
+Além do aspecto didático, o projeto buscou avaliar experimentalmente o comportamento de algoritmos consagrados na disciplina, com o objetivo de comparar diferentes métodos apresentados durante as aulas. Nesse sentido, a representação escolhida para os grafos foi a lista de adjacências, estrutura que oferece flexibilidade e eficiência para a maioria das operações necessárias, especialmente em grafos esparsos, além de ser uma representação eficiente em termos de memória e acesso aos vizinhos de um vértice. Ademais, a implementação fez uso de containers da Standard Template Library (STL), como \texttt{unordered\_map} e \texttt{vector}, estruturas que facilitariam a abordagem de implementação do código.
+
+O objetivo central deste artigo é relatar o processo de desenvolvimento, os desafios de implementação e os resultados da análise experimental desses algoritmos. O texto está organizado de forma que, na Seção 2, detalhamos as decisões de implementação, justificando a escolha pela lista de adjacências e explicando outras escolhas importantes na realização do trabalho. Em seguida, a Seção 3 descreve o porquê do uso de estruturas STL e como as utilizamos. Posteriormente, na Seção 4, apresentamos e analisamos os resultados dos testes de corretude e desempenho. Por fim, a Seção 5 conclui o trabalho, sintetizando as contribuições e aspectos abordados durante o trabalho.
+
+
+\section{Implementações}
+\subsection{Fundamentação Técnica para a Seleção de C++}
+
+A seleção do C++ como linguagem de implementação foi fundamentada em suas capacidades únicas para desenvolvimento de estruturas de dados eficientes, particularmente através do uso da \textit{Standard Template Library} (STL). A análise de pontos-to em C++ beneficia-se substancialmente das estruturas oferecidas pela linguagem, com destaque para a capacidade de implementar \textit{template metaprogramming} e estruturas de dados genéricas altamente otimizadas.\cite{ref2}
+
+A decisão por C++ em detrimento do C tradicional justifica-se por vários fatores técnicos críticos:
+
+\begin{itemize}
+\item \textbf{Abstrações de alto desempenho}: Containers como  \texttt{unordered\_map} e  \texttt{unordered\_set} fornecem operações de hashing com complexidade média O(1), essencial para operações eficientes em grafos de grande escala;
+\item \textbf{Template metaprogramming}: C++ permite implementações genéricas que mantêm a segurança de tipos sem comprometer o desempenho (\cite{ref2});
+\item \textbf{Relevância contemporânea}: C++ mantém posição de destaque em aplicações que exigem controle de baixo nível combinado com abstrações de alto nível (\cite{ref4}).
+\end{itemize}
+
+Esta escolha posiciona-se como tecnologicamente superior ao C tradicional para este contexto específico, considerando:
+\begin{itemize}
+\item A necessidade de manipular estruturas complexas de grafos com desempenho previsível;
+\item A importância da manutenibilidade do código em projeto acadêmico;
+\item A vantagem das abstrações de dados da STL sobre implementações manuais;
+\item A compatibilidade com paradigmas modernos de programação genérica.
+\end{itemize}
+
+A combinação desses fatores validou e fundamentalizou tecnicamente a seleção do C++ como ferramenta ideal para implementação das estruturas de grafos neste trabalho.
+
+\subsection{Estrutura de Dados: Representação por Listas de Adjacência}
+
+A seleção da lista de adjacência como estrutura fundamental para representação de grafos foi baseada em uma análise técnica detalhada das complexidades computacionais envolvidas e das características específicas dos problemas-alvo. Esta representação oferece vantagens significativas para grafos esparsos, que fazem parte do caso predominante em aplicações de processamento de imagens(\cite{boost-adjacency-list}).
+
+\subsubsection{Análise de Complexidade}
+A implementação por listas de adjacência, utilizando \texttt{unordered\_map}, \texttt{unordered\_set} e \texttt{std::vector}, apresenta complexidade espacial de \(O(|V| + |E|)\), onde \(|V|\) representa o número de vértices e \(|E|\) o número de arestas. Esta característica contrasta radicalmente com a complexidade \(O(|V|\)²\()\) da matriz de adjacência, resultando em economias de memória exponenciais para grafos esparsos.
+
+A implementação utiliza duas abordagens complementares:
+\begin{itemize}
+    \item \textbf{SimpleGraph}: 
+    \begin{lstlisting}[language=C++]
+    std::vector<std::unordered_set<int>>
+    \end{lstlisting}
+    
+    \item \textbf{WeightedGraph}: 
+    \begin{lstlisting}[language=C++]
+    std::vector<std::unordered_map<int, std::vector<double>>>
+    \end{lstlisting}
+\end{itemize}
+
+Para operações fundamentais:
+\begin{itemize}
+\item \textbf{Inserção de arestas}: \(O(1)\) médio devido ao hashing, após verificação de existência \(O(1)\);
+\item \textbf{Consulta de adjacência}: \(O(1)\) médio, degradando para O(número de vizinhos) em casos de colisões excessivas de hash;
+\item \textbf{Iteração sobre vizinhos}:\(O(k)\), onde \(k\) é o número de vizinhos do vértice consultado;
+\end{itemize}
+
+\subsubsection{Desempenho em Grafos Esparsos X Densos}
+
+A solução implementada demonstra desempenho diferente quando comparamos grafos esparsos e densos, reflexo direto das características intrínsecas da representação por listas de adjacência. Em grafos esparsos, a implementação exibe excelente desempenho devido principalmente à localidade de referência proporcionada pelos acessos sequenciais aos vizinhos de cada vértice, à eficiência memória resultante do armazenamento proporcional apenas às conexões existentes.
+
+Em contraste, a mesma implementação revela desvantagens significativas em grafos densos (onde \(|E|\) ≈ \(|V|\)²), cenário no qual o overhead de hashing é particularmente problemático, com colisões frequentes degradando o desempenho para \(O(|E|)\). A falta de localidade nos acessos não sequenciais aos elementos e a progressiva perda da vantagem espacial, com consumo aproximando-se de \(O(|V|\)²\()\), acabam por enfatizar ainda mais as limitações desta abordagem em ambientes e contextos de alta densidade. 
+
+A escolha ótima de estrutura depende do fator de densidade do grafo (\cite{ref3}). Para aplicações de processamento de imagens, onde a conectividade é tipicamente local e limitada (4 ou 8 vizinhos por pixel), a lista de adjacência ainda mantém superioridade incontestável.
+
+\subsection{Arquitetura do Código e Principais Decisões de Implementação}
+
+A implementação adota uma arquitetura modular baseada em duas classes especializadas, otimizadas para casos de uso distintos em processamento de grafos.
+
+\subsection{2.3.1 Estrutura de Classes}
+
+\begin{itemize}
+    \item \textbf{Graph}: Para grafos simples, utiliza
+    \begin{lstlisting}[language=C++]
+std::vector<std::unordered_set<int>>
+    \end{lstlisting}
+    oferecendo operações \(O(1)\) médio, degradando para \(O(\text{número de vizinhos})\) em colisões de hash.
+
+    \item \textbf{WeightedGraph}: Para grafos ponderados, emprega
+    \begin{lstlisting}[language=C++]
+std::vector<std::unordered_map<int, std::vector<double>>>
+    \end{lstlisting}
+    permitindo múltiplas arestas entre vértices com pesos distintos.
+\end{itemize}
+
+\subsection{2.3.2 Gestão de Memória}
+
+A estratégia de pré-alocação através dos parâmetros \texttt{n} (capacidade máxima) e \texttt{last\_vert} (tamanho atual) elimina overhead de realocação e otimiza localidade de referência, garantindo verificação de limites em \(O(1)\).
+
+\subsection{2.3.3 Diferenciais Arquiteturais}
+
+\subsubsection*{Sistema de Rotulagem}
+A implementação incorpora
+\begin{lstlisting}[language=C++]
+std::vector<std::string> label
+\end{lstlisting}
+para associação semântica entre identificadores numéricos e descritores textuais, facilitando debugging e aplicações práticas com overhead mínimo.
+
+\subsubsection*{Múltiplas Arestas Ponderadas}
+O principal diferencial é o suporte a múltiplas arestas entre vértices com pesos distintos via
+\begin{lstlisting}[language=C++]
+std::vector<double>
+\end{lstlisting}
+Esta funcionalidade permite modelagem de relacionamentos complexos e suporte nativo a problemas multi-objetivo, com remoção seletiva em \(O(k)\) onde \(k\) é o número de pesos.
+
+\subsubsection*{Otimizações de Performance}
+\begin{itemize}
+    \item \textbf{Remoção por swap-and-pop}: evita deslocamento de elementos.
+    \item \textbf{Verificação de existência}: previne inserções duplicadas.
+    \item \textbf{Verificação de integridade}: garante consistência bidirecional em grafos não-direcionados.
+\end{itemize}
+
+A arquitetura mantém simplicidade conceitual enquanto oferece funcionalidades avançadas para aplicações modernas de processamento de grafos.
+
+
+\section{Análise de Estruturas: Fundamentação Técnica dos Containers}
+\label{sec:structures}
+
+A implementação do sistema de grafos fundamenta-se em três estruturas de dados fundamentais da Standard Template Library (STL): \texttt{std::vector}, \texttt{std::unordered\_map} e \texttt{std::unordered\_set}. Esta seleção estratégica visa otimizar o equilíbrio entre desempenho computacional, eficiência de memória e flexibilidade operacional, atendendo às demandas específicas de processamento de grafos em cenários acadêmicos e aplicados. A combinação desses containers permite implementar eficientemente tanto grafos simples quanto ponderados, com operações de complexidade adequada para a maioria dos algoritmos fundamentais de teoria dos grafos.
+
+\subsection{Alocação Dinâmica e Acesso Indexado}
+
+O \texttt{std::vector} é empregado na implementação tanto para as listas de adjacência quanto para o armazenamento de rótulos dos vértices. Esta estrutura oferece alocação dinâmica de memória com acesso indexado de complexidade \(O(1)\), permitindo que o grafo seja dimensionado conforme necessário durante a execução. Na representação da lista de adjacência, cada posição do vetor corresponde a um vértice e armazena seus vizinhos, enquanto o vetor de rótulos associa identificadores textuais aos vértices numericamente indexados. O uso de \texttt{std::vector} é fundamental para garantir flexibilidade na manipulação do grafo, além de otimizar operações de leitura e escrita sequenciais, essenciais para algoritmos de grafos que demandam alto desempenho e localidade de referência.
+
+\subsection{Mapeamento Eficiente para Grafos Ponderados}
+
+A estrutura \texttt{std::unordered\_map} é utilizada exclusivamente na classe \texttt{WeightedGraph} para mapear vértices aos seus vizinhos e aos respectivos pesos das arestas. Cada elemento do vetor de adjacência é um \texttt{unordered\_map} onde a chave representa o vértice vizinho e o valor é um vetor de pesos associados à aresta. Esta abordagem possibilita buscas, inserções e remoções em tempo constante médio (\(O(1)\)), graças à implementação baseada em tabelas de dispersão (hash tables). O uso de \texttt{unordered\_map} mostra-se especialmente eficiente em grafos esparsos, pois elimina a necessidade de percorrer listas extensas para localizar vizinhos ou pesos específicos, tornando as operações de acesso e atualização das informações de conectividade e ponderação altamente performáticas.
+
+\subsection{Conjuntos Eficientes de Vizinhança}
+
+Na classe \texttt{Graph}, o \texttt{std::unordered\_set} é utilizado para representar o conjunto de vizinhos de cada vértice na lista de adjacência. Esta estrutura garante automaticamente a unicidade dos elementos e oferece operações de inserção, remoção e busca com complexidade média \(O(1)\), beneficiando-se igualmente de tabelas de dispersão. O \texttt{unordered\_set} é particularmente adequado para cenários que exigem verificação rápida da existência de arestas entre vértices e prevenção de conexões duplicadas. Sua integração sinérgica com o \texttt{std::vector} permite uma representação eficiente e escalável do grafo, facilitando significativamente a implementação de algoritmos que dependem de operações rápidas e frequentes sobre os conjuntos de vizinhos, como travessias e verificações de conectividade.
+
+\section{Resultados dos Testes}
+\label{sec:results}
+
+Esta seção apresenta os resultados dos testes conduzidos para verificar a
+\textit{corretude} das operações implementadas e uma análise de
+\textit{desempenho} decorrente da escolha por listas de adjacência baseadas em \texttt{unordered\_set}/\texttt{unordered\_map}.
+
+\subsection{Corretude}
+Os testes unitários foram implementados em \texttt{test.cc} com
+\texttt{assert()} e mensagens de validação. Os cenários cobriram tanto o grafo
+não ponderado (\texttt{Graph}) quanto o ponderado (\texttt{WeightedGraph}), em
+versões dirigidas e não dirigidas. Todos os casos abaixo passaram:
+
+\begin{itemize}
+  \item \textbf{Inserção de vértices} (\texttt{add\_vert} e \texttt{all\_verts}):
+        criação até o limite estabelecido no construtor; tentativa de inserção
+        além da capacidade retorna \texttt{false}.
+  \item \textbf{Inserção de arestas} (\texttt{add\_edge}):
+        em grafos não dirigidos, a inserção cria adjacência simétrica;
+        em dirigidos, cria apenas a aresta orientada. Em não ponderado,
+        duplicatas são rejeitadas.
+  \item \textbf{Arestas ponderadas}: para um par \((u,v)\), pesos iguais não
+        são duplicados; pesos distintos são acumulados na lista.
+  \item \textbf{Consulta de arestas} (\texttt{check\_edge}): retorna
+        \texttt{true} somente quando a aresta existe (respeitando a direção).
+  \item \textbf{Remoção de arestas} (\texttt{remove\_edge}): remove a aresta
+        (e a simétrica, se aplicável); em ponderado, remove a relação inteira
+        \(u\leftrightarrow v\).
+  \item \textbf{Rótulos de vértices} (\texttt{setLabel}/\texttt{getLabel}):
+        definição durante a inserção e atualização posterior preservadas.
+  \item \textbf{Casos limite}: arestas inexistentes não são removidas; operações
+        com vértices fora do intervalo válido falham de forma controlada.
+\end{itemize}
+
+\begin{table}[!ht]
+\centering
+\caption{Síntese dos testes de corretude.}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Operação testada} & \textbf{Cenário principal} & \textbf{Resultado} \\
+\midrule
+\texttt{add\_vert}/\texttt{all\_verts} & Capacidade & OK \\
+\texttt{add\_edge} (ND/D)              & Simetria/direção & OK \\
+\texttt{add\_edge} ponderado           & Duplicidade de peso & OK \\
+\texttt{check\_edge}                   & Existência da aresta & OK \\
+\texttt{remove\_edge} (ND/D)           & Remoção e simetria & OK \\
+Rótulos                                & Set/Get coerentes & OK \\
+Índices inválidos                      & Tratamento seguro & OK \\
+\bottomrule
+\end{tabular}
+\label{tab:corretude}
+\end{table}
+
+\subsection{Desempenho}
+A representação por listas de adjacência com \texttt{unordered\_set}
+(não ponderado) e \texttt{unordered\_map}$\to$\texttt{vector}
+(ponderado) oferece eficiência média amortizada devido ao espalhamento
+(\textit{hashing}). As operações fundamentais apresentam as seguintes
+ordens de complexidade esperadas:
+
+\begin{itemize}
+  \item \textbf{Inserção/consulta/remoção de aresta}:
+        \(O(1)\) em média; \(O(\deg(v))\) na prática para percorrer vizinhos
+        quando necessário; pior caso degenerado \(O(n)\) se houver colisões.
+  \item \textbf{Inserção de vértice}: \(O(1)\) até a capacidade \(n\).
+  \item \textbf{Memória}: \(O(|V| + |E|)\) no não ponderado; no ponderado,
+        \(O(|V| + |E| + \sum \text{nº de pesos por aresta})\).
+\end{itemize}
+
+Esses resultados corroboram a escolha da estrutura: boa escalabilidade em
+grafos esparsos, simplicidade de código e operações de aresta com custo
+constante na média. 
+
+
+\section{Conclusão}
+
+Os resultados obtidos corroboram a escolha da estrutura proposta: 
+a implementação em C++ com uso da STL mostrou-se adequada para 
+grafos esparsos, oferecendo boa escalabilidade, simplicidade de código 
+e operações de aresta com custo constante em média.  
+
+Além disso, os testes realizados confirmaram a correção das operações 
+fundamentais (inserção, remoção, verificação de arestas e rotulação), 
+reforçando a robustez da abordagem. Em comparação com matrizes de 
+adjacência, a representação por listas proporcionou ganhos significativos 
+em termos de uso de memória, o que a torna especialmente vantajosa em 
+aplicações que lidam com grandes grafos esparsos.  
+
+Como limitações, destaca-se o desempenho inferior em grafos densos, 
+decorrente do overhead do hashing e do maior número de colisões. 
+Ainda assim, os benefícios obtidos justificam a escolha do modelo, 
+particularmente em contextos acadêmicos e aplicações práticas que 
+exigem clareza, eficiência e manutenibilidade do código.  
+
+Por fim, como perspectivas futuras, sugere-se a integração desta 
+implementação com algoritmos clássicos de grafos (como Dijkstra, 
+Floyd-Warshall e outros), a comparação sistemática com diferentes 
+representações e o uso de bibliotecas especializadas, como a Boost Graph 
+Library, de modo a ampliar o potencial da solução desenvolvida.
+\section*{Declarações}
+
+\begin{contributions}
+\begin{itemize}
+    \item \textbf{Laura Menezes heráclito Alves:} Pesquisa de artigos, descrição do artigo.
+    \item \textbf{Vitor de Meira Comes:} Descrição do artigo, pesquisa de artigos, desenvolvimento da página de testes do programa.
+    \item \textbf{Antônio Drumond Cota de Sousa:} Implementação da estrutura de grafos.
+    \item \textbf{Achille:} Implementação da estrutura de grafos.
+    \item \textbf{Davi Ferreira Puddo:} Implementação de funcionalidades adicionais (grafos ponderados), tratamento de exceções e correção de erros.
+\end{itemize}
+Todos os autores leram e aprovaram o manuscrito final.
+\end{contributions}
+
+\begin{interests}
+Os autores declaram que não possuem conflitos de interesse.
+\end{interests}
+
+
+\begin{materials}
+O software desenvolvido e analisado durante o presente estudo está disponibilizado abertamente no seguinte repositório do GitHub:
+
+\href{https://github.com/AntonioDrumond/grafos/tree/main/Trabalho_1}{https://github.com/AntonioDrumond/grafos/tree/main/Trabalho\_1}
+\end{materials}
+
+
+\bibliographystyle{apalike-sol}
+\bibliography{refs}
+
+\end{document}
