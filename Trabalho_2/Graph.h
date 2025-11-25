@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -162,6 +163,21 @@ class Graph{
     }
 };
 
+class RGB {
+    public:
+        int r;
+        int g;
+        int b;
+
+        RGB()
+            : r(0), g(0), b(0) {}
+        
+        RGB(int r, int g, int b)
+            : r(r), g(g), b(b) {}
+
+        ~RGB() = default;
+};
+
 
 class WeightedGraph{
 
@@ -171,13 +187,14 @@ class WeightedGraph{
 	int last_vert; //current size
 	bool directed; 
 	std::vector<std::unordered_map<int, std::vector<double>>> arr; //adjacency list
-	std::vector<std::string> label;
+        std::vector<std::string> label;
+        std::vector<RGB> pix_color;
 
 	public:
 
 	//Constructor
 	WeightedGraph(int n, bool directed = false)
-		: n(n), last_vert(0), directed(directed), arr(n), label(n) {}
+		: n(n), last_vert(0), directed(directed), arr(n), label(n), pix_color(n) {}
 
 	//Destructor
 	~WeightedGraph() = default;
@@ -201,38 +218,42 @@ class WeightedGraph{
                     rightEdge = x == width-1, 
                     underEdge = y == height-1;
 
-                printf("i = %d\nx = %d\ny = %d\n", i, x, y);
-                printf("leftEdge = %d, rightEdge = %d, underEdge = %d\n", leftEdge, rightEdge, underEdge);
+                res.pix_color[i].r = img[y][x][0];
+                res.pix_color[i].g = img[y][x][1];
+                res.pix_color[i].b = img[y][x][2];
+
+                // printf("i = %d\nx = %d\ny = %d\n", i, x, y);
+                // printf("leftEdge = %d, rightEdge = %d, underEdge = %d\n", leftEdge, rightEdge, underEdge);
                 
                 if (!leftEdge && !underEdge) { // Diagonal esq-baixo
                     int other = (x-1) + ( (y+1) * width );
-                    std::cout << "(diag esq baixo) i = " << i << " | other = " << other << std::endl;
+                    // std::cout << "(diag esq baixo) i = " << i << " | other = " << other << std::endl;
                     double diff = rgb_diff(img[y][x], img[y+1][x-1]);
                     res.add_edge(i, other, diff);
                 }
 
                 if (!underEdge) { // Para baixo
                     int other = (x) + ( (y+1) * width );
-                    std::cout << "(baixo) i = " << i << " | other = " << other << std::endl;
+                    // std::cout << "(baixo) i = " << i << " | other = " << other << std::endl;
                     double diff = rgb_diff(img[y][x], img[y+1][x]);
                     res.add_edge(i, other, diff);
                 }
 
                 if (!underEdge && !rightEdge) { // Diagonal baixo-direita
                     int other = (x+1) + ( (y+1) * width );
-                    std::cout << "(diag baix esq) i = " << i << " | other = " << other << std::endl;
+                    // std::cout << "(diag baix esq) i = " << i << " | other = " << other << std::endl;
                     double diff = rgb_diff(img[y][x], img[y+1][x+1]);
                     res.add_edge(i, other, diff);
                 }
 
                 if (!rightEdge) { // Para direita
                     int other = (x+1) + ( (y) * width );
-                    std::cout << "(direita) i = " << i << " | other = " << other << std::endl;
+                    // std::cout << "(direita) i = " << i << " | other = " << other << std::endl;
                     double diff = rgb_diff(img[y][x], img[y][x+1]);
                     res.add_edge(i, other, diff);
                 }
 
-                printf("\n\n");
+                // printf("\n\n");
 
             }
 
@@ -373,9 +394,13 @@ class WeightedGraph{
     }
 
     void print_csacademy() const {
+        // char *color = new char[10];
         for (int i = 0; i < last_vert; i++) {
+            // snprintf(color, 9, "0x%02x%02x%02x", this->pix_color[i].r, this->pix_color[i].g, this->pix_color[i].b);
+            // std::cout << i << " " << color << "\n";
             std::cout << i << "\n";
         }
+        // delete[] color;
         for (int i = 0; i < last_vert; i++) {
             for (auto [neighbor, weight] : arr[i]) {
                 std::cout << i << " " << neighbor << " " << weight[0] << "\n";
