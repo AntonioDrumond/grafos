@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <stdio.h>
+#include <stdlib.h>
+#include "Util.h"
 
 class Graph{
 
@@ -179,6 +182,63 @@ class WeightedGraph{
 	//Destructor
 	~WeightedGraph() = default;
 
+        static WeightedGraph from_ppm_matrix(
+            std::vector<std::vector<std::vector<int>>> &img,
+            int width, int height
+        ) {
+            int nVerts = width * height;
+            WeightedGraph res (nVerts);
+
+            // printf("width = %d\nheight = %d\nnVerts = %d\nres size = %d\n", width, height, nVerts, res.n);
+            
+            res.all_verts();
+
+            for(int i=0; i<nVerts; i++){
+                int x = i % width,
+                    y = i / width;
+                
+                bool leftEdge = x < 1,
+                    rightEdge = x == width-1, 
+                    underEdge = y == height-1;
+
+                printf("i = %d\nx = %d\ny = %d\n", i, x, y);
+                printf("leftEdge = %d, rightEdge = %d, underEdge = %d\n", leftEdge, rightEdge, underEdge);
+                
+                if (!leftEdge && !underEdge) { // Diagonal esq-baixo
+                    int other = (x-1) + ( (y+1) * width );
+                    std::cout << "(diag esq baixo) i = " << i << " | other = " << other << std::endl;
+                    double diff = rgb_diff(img[y][x], img[y+1][x-1]);
+                    res.add_edge(i, other, diff);
+                }
+
+                if (!underEdge) { // Para baixo
+                    int other = (x) + ( (y+1) * width );
+                    std::cout << "(baixo) i = " << i << " | other = " << other << std::endl;
+                    double diff = rgb_diff(img[y][x], img[y+1][x]);
+                    res.add_edge(i, other, diff);
+                }
+
+                if (!underEdge && !rightEdge) { // Diagonal baixo-direita
+                    int other = (x+1) + ( (y+1) * width );
+                    std::cout << "(diag baix esq) i = " << i << " | other = " << other << std::endl;
+                    double diff = rgb_diff(img[y][x], img[y+1][x+1]);
+                    res.add_edge(i, other, diff);
+                }
+
+                if (!rightEdge) { // Para direita
+                    int other = (x+1) + ( (y) * width );
+                    std::cout << "(direita) i = " << i << " | other = " << other << std::endl;
+                    double diff = rgb_diff(img[y][x], img[y][x+1]);
+                    res.add_edge(i, other, diff);
+                }
+
+                printf("\n\n");
+
+            }
+
+            return res;
+        }
+
 	bool add_vert() {
 		if (last_vert < n) {
 			last_vert++;
@@ -318,7 +378,7 @@ class WeightedGraph{
         }
         for (int i = 0; i < last_vert; i++) {
             for (auto [neighbor, weight] : arr[i]) {
-                std::cout << i << " " << neighbor << "\n";
+                std::cout << i << " " << neighbor << " " << weight[0] << "\n";
             }
         }
     }
