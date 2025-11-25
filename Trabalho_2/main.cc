@@ -1,5 +1,4 @@
 #include "Graph.h"
-#include <cstdio>
 #include <unordered_map>
 #include <vector>
 
@@ -26,16 +25,6 @@ struct Edge {
 	}
 
 	~Edge() = default;
-
-	// Necessary for the count in the kruskal's
-	bool operator== (const Edge other) {
-		bool res = false;
-		if ((this->u == other.u) &&
-			(this->v = other.v)) {
-			res = true;
-		}
-		return (res);
-	}
 
 	void print(void) {
 		std::cout << "u: " << this->u << " v: " << this->v << " w: " << this->w << std::endl;
@@ -73,13 +62,22 @@ void quicksort(std::vector<Edge>* arr, int L, int R) {
 }
 
 
-WeightedGraph* kruskal (WeightedGraph* g) {
+// Get a MST from kruskal's algorithm
+// ! Should not be called when g is directed !
+WeightedGraph* kruskal (WeightedGraph* G) {
 	
 	std::vector<Edge> edges = std::vector<Edge>();
+	int vert_n = G->vert_count();
+	int union_find [2][vert_n];
 
-	int vert_n = g->vert_count();
+	// Find edges
 	for (int i = 0; i < vert_n; i++) {
-		std::unordered_map<int, std::vector<double>> N = g->vert_neighbors(i);
+
+		// Reuse the same for to create the union_find vector
+		union_find[0][i] = i; // ancestor
+		union_find[1][i] = 0; // rank
+
+		std::unordered_map<int, std::vector<double>> N = G->vert_neighbors(i);
 		for (int j = i; j < vert_n; j++) {
 			int edge_n = N[j].size();
 			for (int k = 0; k < edge_n; k++) {
@@ -90,20 +88,69 @@ WeightedGraph* kruskal (WeightedGraph* g) {
 
 	int edge_n = edges.size();
 	quicksort(&edges, 0, edge_n-1);
+
+	// Create the MST's Graph
+	WeightedGraph* T = new WeightedGraph(vert_n);
+	T->all_verts();
+
+	// Union find
 	for (int i = 0; i < edge_n; i++) {
-		edges[i].print();
+
+		Edge e = edges[i];
+		int u = e.u;
+		int v = e.v;
+		int ancestor_u = u;
+		int ancestor_v = v;
+
+		// Find oldest ancestor for u
+		while (ancestor_u != union_find[0][ancestor_u]) {
+			ancestor_u = union_find[0][ancestor_u];
+		}
+
+		// Find oldest ancestor for u
+		while (ancestor_v != union_find[0][ancestor_v]) {
+			ancestor_v = union_find[0][ancestor_v];
+		}
+
+		if (ancestor_u != ancestor_v) {
+			T->add_edge(u, v, e.w);
+			if (union_find[1][ancestor_u] > union_find[1][ancestor_v]) {
+				union_find[0][ancestor_v] = ancestor_u; // Set parent 
+				union_find[1][ancestor_u]++; 			// Increase rank
+			} else {
+				union_find[0][ancestor_u] = ancestor_v; // Set parent 
+				union_find[1][ancestor_v]++; 			// Increase rank
+			}
+		}
 	}
-	return (g);
+	return (T);
 }
 
 int main (void) {
 
-	WeightedGraph g = WeightedGraph(5);
+	WeightedGraph g = WeightedGraph(11);
 	g.all_verts();
-	g.add_edge(0, 1, 0.5);
-	g.add_edge(0, 1, 0.7);
-	g.add_edge(0, 2, 0.3);
+
+	g.add_edge(0, 1, 7);
+	g.add_edge(0, 2, 8);
+	g.add_edge(1, 3, 5);
+	g.add_edge(1, 4, 9);
+	g.add_edge(2, 3, 2);
+	g.add_edge(3, 4, 13);
+	g.add_edge(3, 6, 11);
+	g.add_edge(3, 10, 4);
+	g.add_edge(4, 5, 6);
+	g.add_edge(4, 8, 2);
+	g.add_edge(6, 7, 6);
+	g.add_edge(7, 8, 6);
+	g.add_edge(8, 9, 3);
+	g.add_edge(9, 10, 5);
+
 	g.print_raw();
-	kruskal(&g);
+	std::cout << "\n\n\n";
+
+	WeightedGraph* T = kruskal(&g);
+	T->print_raw();
+
 	return (0);
 }
