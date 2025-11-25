@@ -16,6 +16,9 @@ int main (int argc, char *argv[]) {
 
     WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height);
 
+    auto t = g.to_ppm_matrix(width, height);
+    savePPM_matrix("testee.ppm", t, width, height);
+
     g.print_raw();
     std::cout << "\n\n\n";
     g.print_csacademy();

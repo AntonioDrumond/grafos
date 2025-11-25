@@ -7,7 +7,6 @@
 #include <sstream>
 #include <cstdlib>
 
-
 struct Edge {
     int u, v; //verticie de origem e de destino     
     float weight;
@@ -211,6 +210,28 @@ bool loadPPM(
     }
 
     return true;
+}
+
+void savePPM_matrix(
+    const std::string &filename, 
+    const std::vector<std::vector<std::vector<int>>> &image,
+    int width, int height
+) {
+    std::ofstream file(filename);
+    
+    file << "P6\n";
+    // file << "# Segmented Image\n";
+    file << width << " " << height << "\n";
+    file << "255\n";
+    
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            unsigned char pixel[3] = {static_cast<unsigned char>(image[y][x][0]),
+                                    static_cast<unsigned char>(image[y][x][1]),
+                                    static_cast<unsigned char>(image[y][x][2])};
+            file.write(reinterpret_cast<const char*>(pixel), 3);
+        }
+    }
 }
 
 // Função para salvar imagem segmentada em PPM
