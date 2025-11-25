@@ -78,6 +78,7 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 		union_find[1][i] = 0; // rank
 
 		std::unordered_map<int, std::vector<double>> N = G->vert_neighbors(i);
+
 		for (int j = i; j < vert_n; j++) {
 			int edge_n = N[j].size();
 			for (int k = 0; k < edge_n; k++) {
@@ -112,12 +113,18 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 			ancestor_v = union_find[0][ancestor_v];
 		}
 
+		// If they dont share the same ancestor | there is no cycle
 		if (ancestor_u != ancestor_v) {
+
 			T->add_edge(u, v, e.w);
-			if (union_find[1][ancestor_u] > union_find[1][ancestor_v]) {
+
+			// If u's ancestor has a higher rank
+			if (union_find[1][ancestor_u] > union_find[1][ancestor_v]) { 
 				union_find[0][ancestor_v] = ancestor_u; // Set parent 
 				union_find[1][ancestor_u]++; 			// Increase rank
-			} else {
+
+			// If v's ancestor has a higher rank
+			} else if (union_find[1][ancestor_u] < union_find[1][ancestor_v]) {
 				union_find[0][ancestor_u] = ancestor_v; // Set parent 
 				union_find[1][ancestor_v]++; 			// Increase rank
 			}
