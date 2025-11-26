@@ -7,10 +7,11 @@
 #include <sstream>
 #include <cstdlib>
 
-struct Edge {
-    int u, v; //verticie de origem e de destino     
-    float weight;
-};
+#ifndef EDGE_H
+#define EDGE_H
+#include "edge.h"
+#endif
+
 
 struct Component {
     int root;  // Raiz do componente
@@ -45,7 +46,7 @@ void mergeComponents(std::vector<Component>& components, int u_root, int v_root,
 
 // Função de comparação para ordenar as arestas
 bool compareEdges(const Edge& e1, const Edge& e2) {
-    return e1.weight < e2.weight;
+    return e1.w < e2.w;
 }
 
 // Função para segmentação de imagem
@@ -138,9 +139,9 @@ std::vector<int> segmentImage(const std::vector<std::vector<std::vector<int>>>& 
 
         
             // Se o peso da aresta for pequeno em comparação com a diferença interna, realizar a fusão
-            if (edge.weight <= std::min(internal_diff_u, internal_diff_v)) {
+            if (edge.w <= std::min(internal_diff_u, internal_diff_v)) {
                 // Fusão dos componentes u e v
-                mergeComponents(components, u_root, v_root, edge.weight, color_counter++);
+                mergeComponents(components, u_root, v_root, edge.w, color_counter++);
             }
         }
     }

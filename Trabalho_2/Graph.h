@@ -223,6 +223,14 @@ public:
     //Destructor
     ~WeightedGraph() = default;
 
+	void setPixColor(std::vector<RGB> pc) {
+		this->pix_color = pc;
+	}
+
+	std::vector<RGB> getPixColor() {
+		return this->pix_color;
+	}
+
     static WeightedGraph from_ppm_matrix(
         std::vector<std::vector<std::vector<int>>> &img,
         int width, int height,

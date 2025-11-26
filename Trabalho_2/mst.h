@@ -3,35 +3,10 @@
 #include <unordered_map>
 #include <vector>
 
-struct Edge {
-	int u;			// If G is directed, then: u -> v
-	int v;
-	double w = 0.0;
-
-	Edge() {
-		this->u = -1;
-		this->v = -1;
-		this->w = 0.0;
-	}
-
-	Edge(int u, int v) {
-		this->u = u;
-		this->v = v;
-	}
-
-	Edge(int u, int v, double w) {
-		this->u = u;
-		this->v = v;
-		this->w = w;
-	}
-
-	~Edge() = default;
-
-	void print(void) {
-		std::cout << "u: " << this->u << " v: " << this->v << " w: " << this->w << std::endl;
-	}
-
-};
+#ifndef EDGE_H
+#define EDGE_H
+#include "edge.h"
+#endif
 
 struct minHeap {
 	bool operator()(const Edge& a, const Edge& b) const {
@@ -47,7 +22,7 @@ struct minHeap {
 
 // Get a MST from kruskal's algorithm
 // ! Should not be called when g is directed !
-WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
+WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight, int width) {
 	
 	std::priority_queue<Edge,  std::vector<Edge>, minHeap> pq;
 	int vert_n = G->vert_count();
@@ -55,12 +30,26 @@ WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
 	// Find edges
 	for (int i = 0; i < vert_n; i++) {
 
-		std::unordered_map<int, std::vector<double>> N = G->vert_neighbors(i);
+		int i1 = i+1;
+		int iw = i+width;
+		int iw1 = iw+1;
 
-		for (int j = i; j < vert_n; j++) {
-			int edge_n = N[j].size();
-			for (int k = 0; k < edge_n; k++) {
-				pq.push(Edge(i, j, N[j][k]));
+		if ((i1 % width) != 0) {
+			std::vector<double> weights = G->get_weight(i, i1);
+			for (double w : weights) {
+				pq.push(Edge(i, i1, w));
+			}
+		}
+		if ((iw % width) != 0) {
+			std::vector<double> weights = G->get_weight(i, iw);
+			for (double w : weights) {
+				pq.push(Edge(i, iw, w));
+			}
+		}
+		if ((iw1 % width) != 0) {
+			std::vector<double> weights = G->get_weight(i, iw1);
+			for (double w : weights) {
+				pq.push(Edge(i, iw1, w));
 			}
 		}
 	}
@@ -68,6 +57,7 @@ WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
 	// Create the MST's Graph
 	WeightedGraph* T = new WeightedGraph(vert_n);
 	T->all_verts();
+	T->setPixColor(G->getPixColor());
 
 	int union_find [2][vert_n];
 	for (int i = 0; i < vert_n; i++) {
@@ -82,14 +72,10 @@ WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
 
 		Edge e = pq.top();
 		pq.pop();
-		if (e.w == 8.0) {
-			std::cout << "i: " << i << "\n";
-		}
 
 		if (e.w >= max_weight) {
 			i = edge_n;
 		} else {
-
 			int u = e.u;
 			int v = e.v;
 			int ancestor_u = u;
@@ -124,33 +110,4 @@ WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
 		}
 	}
 	return (T);
-}
-
-int main (void) {
-
-	WeightedGraph g = WeightedGraph(11);
-	g.all_verts();
-
-	g.add_edge(0, 1, 7);
-	g.add_edge(0, 2, 8);
-	g.add_edge(1, 3, 5);
-	g.add_edge(1, 4, 9);
-	g.add_edge(2, 3, 2);
-	g.add_edge(3, 4, 13);
-	g.add_edge(3, 6, 11);
-	g.add_edge(3, 10, 4);
-	g.add_edge(4, 5, 6);
-	g.add_edge(4, 8, 2);
-	g.add_edge(6, 7, 6);
-	g.add_edge(7, 8, 6);
-	g.add_edge(8, 9, 3);
-	g.add_edge(9, 10, 5);
-
-	g.print_raw();
-	std::cout << "\n\n\n";
-
-	WeightedGraph* T = kruskal_segmentation(&g, 6.0);
-	T->print_raw();
-
-	return (0);
 }
