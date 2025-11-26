@@ -514,6 +514,7 @@ public:
                 if (!directed) {
                     std::vector<double>* weight_list = &arr[vert2][vert1];
                     auto it = std::find(weight_list->begin(), weight_list->end(), weight);
+
 					*it = weight_list->back();	 	// Assuming that the weight was found based on the previous check
 					weight_list->pop_back();
 				}
