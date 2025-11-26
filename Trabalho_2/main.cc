@@ -1,4 +1,5 @@
 #include "Graph.h"
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -32,41 +33,24 @@ struct Edge {
 
 };
 
-void quicksort(std::vector<Edge>* arr, int L, int R) {
-	double pivot = (*arr)[(int)((L+R)/2.0)].w;
-	int l = L;
-	int r = R;
-
-	while (l <= r) {
-		while ((*arr)[l].w < pivot) {
-			l++;
+struct minHeap {
+	bool operator()(const Edge& a, const Edge& b) const {
+		bool res = false;
+		if (a.w != b.w) {
+			res = (a.w > b.w);
+		} else { 
+			res = (a.u < b.u || a.v < b.v);
 		}
-		while ((*arr)[r].w > pivot) {
-			r--;
-		}
-		if (l <= r) {
-			Edge tmp = (*arr)[l];
-			(*arr)[l] = (*arr)[r];
-			(*arr)[r] = tmp;
-			l++;
-			r--;
-		}
+		return (res);
 	}
-	
-	if (l < R) {
-		quicksort(arr, l, R);
-	}
-	if (L < r) {
-		quicksort(arr, L, r);
-	}
-}
-
+};
 
 // Get a MST from kruskal's algorithm
 // ! Should not be called when g is directed !
 WeightedGraph* kruskal (WeightedGraph* G) {
 	
 	std::vector<Edge> edges = std::vector<Edge>();
+	std::priority_queue<Edge,  std::vector<Edge>, minHeap> pq;
 	int vert_n = G->vert_count();
 
 	// Find edges
@@ -77,13 +61,10 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 		for (int j = i; j < vert_n; j++) {
 			int edge_n = N[j].size();
 			for (int k = 0; k < edge_n; k++) {
-				edges.push_back(Edge(i, j, N[j][k]));
+				pq.push(Edge(i, j, N[j][k]));
 			}
 		}
 	}
-
-	int edge_n = edges.size();
-	quicksort(&edges, 0, edge_n-1);
 
 	// Create the MST's Graph
 	WeightedGraph* T = new WeightedGraph(vert_n);
@@ -95,10 +76,14 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 		union_find[1][i] = 0; // rank
 	}
 
+	int edge_n = pq.size();
+
 	// Union find
 	for (int i = 0; i < edge_n; i++) {
 
-		Edge e = edges[i];
+		Edge e = pq.top();
+		pq.pop();
+
 		int u = e.u;
 		int v = e.v;
 		int ancestor_u = u;
