@@ -47,7 +47,7 @@ struct minHeap {
 
 // Get a MST from kruskal's algorithm
 // ! Should not be called when g is directed !
-WeightedGraph* kruskal (WeightedGraph* G) {
+WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight) {
 	
 	std::priority_queue<Edge,  std::vector<Edge>, minHeap> pq;
 	int vert_n = G->vert_count();
@@ -82,36 +82,44 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 
 		Edge e = pq.top();
 		pq.pop();
-
-		int u = e.u;
-		int v = e.v;
-		int ancestor_u = u;
-		int ancestor_v = v;
-
-		// Find oldest ancestor for u
-		while (ancestor_u != union_find[0][ancestor_u]) {
-			ancestor_u = union_find[0][ancestor_u];
+		if (e.w == 8.0) {
+			std::cout << "i: " << i << "\n";
 		}
 
-		// Find oldest ancestor for u
-		while (ancestor_v != union_find[0][ancestor_v]) {
-			ancestor_v = union_find[0][ancestor_v];
-		}
+		if (e.w >= max_weight) {
+			i = edge_n;
+		} else {
 
-		// If they dont share the same ancestor | there is no cycle
-		if (ancestor_u != ancestor_v) {
+			int u = e.u;
+			int v = e.v;
+			int ancestor_u = u;
+			int ancestor_v = v;
 
-			T->add_edge(u, v, e.w);
+			// Find oldest ancestor for u
+			while (ancestor_u != union_find[0][ancestor_u]) {
+				ancestor_u = union_find[0][ancestor_u];
+			}
 
-			// If u's ancestor has a higher rank
-			if (union_find[1][ancestor_u] > union_find[1][ancestor_v]) { 
-				union_find[0][ancestor_v] = ancestor_u; // Set parent 
-				union_find[1][ancestor_u]++; 			// Increase rank
+			// Find oldest ancestor for u
+			while (ancestor_v != union_find[0][ancestor_v]) {
+				ancestor_v = union_find[0][ancestor_v];
+			}
 
-			// If v's ancestor has a higher rank
-			} else if (union_find[1][ancestor_u] < union_find[1][ancestor_v]) {
-				union_find[0][ancestor_u] = ancestor_v; // Set parent 
-				union_find[1][ancestor_v]++; 			// Increase rank
+			// If they dont share the same ancestor | there is no cycle
+			if (ancestor_u != ancestor_v) {
+
+				T->add_edge(u, v, e.w);
+
+				// If u's ancestor has a higher or equal rank
+				if (union_find[1][ancestor_u] >= union_find[1][ancestor_v]) { 
+					union_find[0][ancestor_v] = ancestor_u; // Set parent 
+					union_find[1][ancestor_u]++; 			// Increase rank
+
+				// If v's ancestor has a higher rank
+				} else {
+					union_find[0][ancestor_u] = ancestor_v; // Set parent 
+					union_find[1][ancestor_v]++; 			// Increase rank
+				}
 			}
 		}
 	}
@@ -141,7 +149,7 @@ int main (void) {
 	g.print_raw();
 	std::cout << "\n\n\n";
 
-	WeightedGraph* T = kruskal(&g);
+	WeightedGraph* T = kruskal_segmentation(&g, 6.0);
 	T->print_raw();
 
 	return (0);
