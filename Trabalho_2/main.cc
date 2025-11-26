@@ -49,7 +49,6 @@ struct minHeap {
 // ! Should not be called when g is directed !
 WeightedGraph* kruskal (WeightedGraph* G) {
 	
-	std::vector<Edge> edges = std::vector<Edge>();
 	std::priority_queue<Edge,  std::vector<Edge>, minHeap> pq;
 	int vert_n = G->vert_count();
 
