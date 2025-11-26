@@ -68,14 +68,9 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 	
 	std::vector<Edge> edges = std::vector<Edge>();
 	int vert_n = G->vert_count();
-	int union_find [2][vert_n];
 
 	// Find edges
 	for (int i = 0; i < vert_n; i++) {
-
-		// Reuse the same for to create the union_find vector
-		union_find[0][i] = i; // ancestor
-		union_find[1][i] = 0; // rank
 
 		std::unordered_map<int, std::vector<double>> N = G->vert_neighbors(i);
 
@@ -93,6 +88,12 @@ WeightedGraph* kruskal (WeightedGraph* G) {
 	// Create the MST's Graph
 	WeightedGraph* T = new WeightedGraph(vert_n);
 	T->all_verts();
+
+	int union_find [2][vert_n];
+	for (int i = 0; i < vert_n; i++) {
+		union_find[0][i] = i; // ancestor
+		union_find[1][i] = 0; // rank
+	}
 
 	// Union find
 	for (int i = 0; i < edge_n; i++) {
