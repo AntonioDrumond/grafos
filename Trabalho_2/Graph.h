@@ -30,6 +30,19 @@ public:
     //Destructor
     ~Graph() = default;
 
+	int vert_count() {
+		return last_vert;
+	}
+
+	Graph* clone(void) {
+		Graph* sub = new Graph(this->n);
+		sub->last_vert = this->last_vert;
+		sub->directed = this->directed;
+		sub->arr = this->arr;
+		sub->label = this->label;
+		return (sub);
+	}
+
     bool add_vert(){
         if(last_vert < n){
             last_vert++;
@@ -116,6 +129,10 @@ public:
         }
         else return false;
     }
+
+	int edge_number (int vert) {
+		return (arr[vert].size());
+	}
 
     void test(){
         std::cout << "n = " << this->n << "\n";
@@ -296,7 +313,7 @@ public:
         std::vector<int> stack;
         stack.push_back(0);
         int crrComp = 0;
-        while (visited.size() < this->last_vert) {
+        while ((int)visited.size() < this->last_vert) {
             if (stack.empty()){ // Empty stack (jump component)
                 // std::cout << "\nstack empty\n";
                 int i;
@@ -330,7 +347,7 @@ public:
         int crrComp = 0;
         int nPixelsComp = 0;
         long r_sum = 0, g_sum = 0, b_sum = 0;
-        while (visited.size() < this->last_vert) {
+        while ((int)visited.size() < this->last_vert) {
             if (stack.empty()){ // Empty stack (jump component)
                 // std::cout << "\nstack empty\n";
                 int i;
@@ -378,13 +395,26 @@ public:
         this->paint_components(colors);
     }
 
-    bool add_vert() {
-        if (last_vert < n) {
-            last_vert++;
-            return true;
-        }
-        return false;
-    }
+	int vert_count() {
+		return last_vert;
+	}
+
+	WeightedGraph* clone(void) {
+		WeightedGraph* sub = new WeightedGraph(this->n);
+		sub->last_vert = this->last_vert;
+		sub->directed = this->directed;
+		sub->arr = this->arr;
+		sub->label = this->label;
+		return (sub);
+	}
+
+	bool add_vert() {
+		if (last_vert < n) {
+			last_vert++;
+			return true;
+		}
+		return false;
+	}
 
     bool add_vert(std::string label) {
         if (last_vert < n) {
@@ -459,6 +489,14 @@ public:
         else return false;
     }
 
+	std::vector<double> get_weight (int vert1, int vert2) {
+		std::vector<double> w = std::vector<double>();
+		if (check_edge(vert1, vert2)) {
+			w = arr[vert1][vert2];
+		}
+		return (w);
+	}
+
     bool remove_edge(int vert1, int vert2, double weight) 
     {
         if(check_edge(vert1, vert2)) 
@@ -476,23 +514,26 @@ public:
                 if (!directed) {
                     std::vector<double>* weight_list = &arr[vert2][vert1];
                     auto it = std::find(weight_list->begin(), weight_list->end(), weight);
-
-                    *it = weight_list->back();	 	// Assuming that the weight was found based on the previous check
-                    weight_list->pop_back();
-                }
-                return true;
-            }
-            else if (arr[vert1][vert2][0] == weight)
-            {
-                arr[vert1].erase(vert2);
-                if (!directed) {
-                    arr[vert2].erase(vert1);
-                }
-                return true;
-            }
+					*it = weight_list->back();	 	// Assuming that the weight was found based on the previous check
+					weight_list->pop_back();
+				}
+				return true;
+		}
+			else if (arr[vert1][vert2][0] == weight)
+			{
+				arr[vert1].erase(vert2);
+				if (!directed) {
+					arr[vert2].erase(vert1);
+				}
+				return true;
+			}
         }
         return false;
     }
+
+	int edge_number (int vert) {
+		return (arr[vert].size());
+	}
 
     std::unordered_map<int, std::vector<double>> vert_neighbors(int vert) {
         if(vert <= last_vert){
