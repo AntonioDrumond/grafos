@@ -30,6 +30,19 @@ public:
     //Destructor
     ~Graph() = default;
 
+	int vert_count() {
+		return last_vert;
+	}
+
+	Graph* clone(void) {
+		Graph* sub = new Graph(this->n);
+		sub->last_vert = this->last_vert;
+		sub->directed = this->directed;
+		sub->arr = this->arr;
+		sub->label = this->label;
+		return (sub);
+	}
+
     bool add_vert(){
         if(last_vert < n){
             last_vert++;
@@ -116,6 +129,10 @@ public:
         }
         else return false;
     }
+
+	int edge_number (int vert) {
+		return (arr[vert].size());
+	}
 
     void test(){
         std::cout << "n = " << this->n << "\n";
@@ -205,6 +222,19 @@ public:
 
     //Destructor
     ~WeightedGraph() = default;
+
+    int vert_count() {
+        return last_vert;
+    }
+
+    WeightedGraph* clone(void) {
+        WeightedGraph* sub = new WeightedGraph(this->n);
+        sub->last_vert = this->last_vert;
+        sub->directed = this->directed;
+        sub->arr = this->arr;
+        sub->label = this->label;
+        return (sub);
+    }
 
     static WeightedGraph from_ppm_matrix(
         std::vector<std::vector<std::vector<int>>> &img,
@@ -459,6 +489,14 @@ public:
         else return false;
     }
 
+	std::vector<double> get_weight (int vert1, int vert2) {
+		std::vector<double> w = std::vector<double>();
+		if (check_edge(vert1, vert2)) {
+			w = arr[vert1][vert2];
+		}
+		return (w);
+	}
+
     bool remove_edge(int vert1, int vert2, double weight) 
     {
         if(check_edge(vert1, vert2)) 
@@ -493,6 +531,10 @@ public:
         }
         return false;
     }
+
+	int edge_number (int vert) {
+		return (arr[vert].size());
+	}
 
     std::unordered_map<int, std::vector<double>> vert_neighbors(int vert) {
         if(vert <= last_vert){
