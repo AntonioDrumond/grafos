@@ -14,7 +14,7 @@ int main (int argc, char *argv[]) {
 
     print_ppm(image, width, height);
 
-    WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height);
+    WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height, true);
 
     g.print_raw();
     std::cout << "\n\n\n";

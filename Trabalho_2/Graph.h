@@ -201,10 +201,11 @@ class WeightedGraph{
 
         static WeightedGraph from_ppm_matrix(
             std::vector<std::vector<std::vector<int>>> &img,
-            int width, int height
+            int width, int height,
+            bool directed = false
         ) {
             int nVerts = width * height;
-            WeightedGraph res (nVerts);
+            WeightedGraph res (nVerts, directed);
 
             // printf("width = %d\nheight = %d\nnVerts = %d\nres size = %d\n", width, height, nVerts, res.n);
             
