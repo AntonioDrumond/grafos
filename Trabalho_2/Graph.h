@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdint>
+#include <ctime>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -317,23 +318,27 @@ public:
     }
 
     void paint_components(std::vector<RGB> colors) {
-        std::unordered_set<int> visited = std::unordered_set<int>(this->last_vert);
+        // std::unordered_set<int> visited = std::unordered_set<int>(this->last_vert);
+        std::vector<bool> visited = std::vector<bool>(this->last_vert, false);
+        int nVisited = 0;
         std::vector<int> stack;
         stack.push_back(0);
         int crrComp = 0;
-        while ((int)visited.size() < this->last_vert) {
+        while (nVisited < this->last_vert) {
             if (stack.empty()){ // Empty stack (jump component)
                 // std::cout << "\nstack empty\n";
                 int i;
-                for(i=0; i<this->last_vert && !(visited.count(i)<1); i++);
+                for(i=0; i<this->last_vert && visited[i]; i++);
                 stack.push_back(i);
                 crrComp++;
             }
             // else {std::cout << "stack: "; for(int j=0; j<stack.size(); std::cout << stack[j++] << " "); std::cout << "\n";}
             int crr = stack.back();
             stack.pop_back();
-            if (visited.count(crr) < 1){
-                visited.insert(crr);
+            if (!visited[crr]){
+                // visited.insert(crr);
+                visited[crr] = true;
+                nVisited++;
                 this->pix_color[crr].r = colors[crrComp].r;
                 this->pix_color[crr].g = colors[crrComp].g;
                 this->pix_color[crr].b = colors[crrComp].b;
@@ -348,18 +353,20 @@ public:
     }
 
     std::vector<RGB> get_colors_components() {
-        std::unordered_set<int> visited = std::unordered_set<int>(this->last_vert);
+        //std::unordered_set<int> visited = std::unordered_set<int>(this->last_vert);
+        std::vector<bool> visited = std::vector<bool>(this->last_vert, false);
+        int nVisited = 0;
         std::vector<int> stack;
         std::vector<RGB> colors;
         stack.push_back(0);
         int crrComp = 0;
         int nPixelsComp = 0;
         long r_sum = 0, g_sum = 0, b_sum = 0;
-        while ((int)visited.size() < this->last_vert) {
+        while (nVisited < this->last_vert) {
             if (stack.empty()){ // Empty stack (jump component)
                 // std::cout << "\nstack empty\n";
                 int i;
-                for(i=0; i<this->last_vert && !(visited.count(i)<1); i++);
+                for(i=0; i<this->last_vert && visited[i]; i++);
                 stack.push_back(i);
                 r_sum /= nPixelsComp;
                 g_sum /= nPixelsComp;
@@ -372,8 +379,9 @@ public:
             // else {std::cout << "stack: "; for(int j=0; j<stack.size(); std::cout << stack[j++] << " "); std::cout << "\n";}
             int crr = stack.back();
             stack.pop_back();
-            if (visited.count(crr) < 1){
-                visited.insert(crr);
+            if (!visited[crr]){
+                visited[crr] = true;
+                nVisited++;
                 r_sum += this->pix_color[crr].r;
                 g_sum += this->pix_color[crr].g;
                 b_sum += this->pix_color[crr].b;
@@ -394,13 +402,17 @@ public:
     }
 
     void avg_colors_components() {
+        clock_t start = clock();
         std::vector<RGB> colors = this->get_colors_components();
+        clock_t getColors = clock();
         /*
         for(int i=0; i<colors.size(); i++){
             printf("[0x%02x%02x%02x]", colors[i].r, colors[i].g, colors[i].b);
         }
         */
         this->paint_components(colors);
+        clock_t end = clock();
+        printf("\nAVG COLORS:\nGet Colosrs: %lf\nPainting: %lf\n\n", (((double)(getColors-start))/CLOCKS_PER_SEC), (((double)(end-getColors))/CLOCKS_PER_SEC));
     }
 
 	int vert_count() {
