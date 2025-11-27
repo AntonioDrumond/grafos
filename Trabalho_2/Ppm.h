@@ -296,6 +296,19 @@ std::vector<std::vector<std::vector<int>>> gaussianBlur (std::vector<std::vector
     return res;
 }
 
+void lightenImg(std::vector<std::vector<std::vector<int>>> &img, int width, int height, double factor) {
+    for(int y=0; y<height; y++){
+        for(int x=0; x<width; x++){
+            img[y][x][0] *= factor;
+            img[y][x][1] *= factor;
+            img[y][x][2] *= factor;
+            if(img[y][x][0] > 255) img[y][x][0] = 255;
+            if(img[y][x][1] > 255) img[y][x][1] = 255;
+            if(img[y][x][2] > 255) img[y][x][2] = 255;
+        }
+    }
+}
+
 std::vector<std::vector<std::vector<int>>> blurImg (std::vector<std::vector<std::vector<int>>> &img, int width, int height, int passes){
     auto blurred = gaussianBlur(img, width, height);
     for(int i=1; i<passes; i++){

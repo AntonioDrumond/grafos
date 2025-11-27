@@ -17,12 +17,13 @@ int main (int argc, char *argv[]) {
 
 //	    print_ppm(image, width, height);
 
+    image = blurImg(image, width, height, 7);
+    savePPM_matrix("blurred.ppm", image, width, height);
+
+    lightenImg(image, width, height, 1.4);
+    savePPM_matrix("light.ppm", image, width, height);
+
     WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height, true);
-    clock_t preblur = clock();
-    image = blurImg(image, width, height, 10);
-    clock_t postblur = clock();
-    double tim = (double)(postblur-preblur);
-    printf("runtime: %lf\n", (tim/CLOCKS_PER_SEC));
 
     clock_t graphFromMatrix = clock();
     WeightedGraph* T = kruskal_segmentation(&g, 6, width);
