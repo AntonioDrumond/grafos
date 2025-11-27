@@ -235,6 +235,75 @@ void savePPM_matrix(
     }
 }
 
+std::vector<std::vector<std::vector<int>>> gaussianBlur (std::vector<std::vector<std::vector<int>>> &img, int width, int height){
+    std::vector<std::vector<std::vector<int>>> res;
+    res.resize(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
+    for(int y=0; y<height; y++){
+        for(int x=0; x<width; x++){
+            bool left = x < 1,
+                 right = x > width-2,
+                 bot = y < 1,
+                 top = y > height-2;
+            int nr = img[y][x][0] * 4,
+                ng = img[y][x][1] * 4,
+                nb = img[y][x][2] * 4;
+            if (!top) {
+                nr += 2 * img[y+1][x][0];
+                ng += 2 * img[y+1][x][1];
+                nb += 2 * img[y+1][x][2];
+            }
+            if (!bot) {
+                nr += 2 * img[y-1][x][0];
+                ng += 2 * img[y-1][x][1]; 
+                nb += 2 * img[y-1][x][2];
+            }
+            if (!right) {
+                nr += 2 * img[y][x+1][0];
+                ng += 2 * img[y][x+1][1];
+                nb += 2 * img[y][x+1][2];
+            }
+            if (!left) {
+                nr += 2 * img[y][x-1][0];
+                ng += 2 * img[y][x-1][1];
+                nb += 2 * img[y][x-1][2];
+            }
+            if (!left && !bot){
+                nr += img[y-1][x-1][0];
+                ng += img[y-1][x-1][1];
+                nb += img[y-1][x-1][2];
+            }
+            if (!left && !top){
+                nr += img[y+1][x-1][0];
+                ng += img[y+1][x-1][1];
+                nb += img[y+1][x-1][2];
+            }
+            if (!right&& !bot){
+                nr += img[y-1][x+1][0];
+                ng += img[y-1][x+1][1];
+                nb += img[y-1][x+1][2];
+            }
+            if (!right && !top){
+                nr += img[y+1][x+1][0];
+                ng += img[y+1][x+1][1];
+                nb += img[y+1][x+1][2];
+            }
+            nr /= 16;
+            ng /= 16;
+            nb /= 16;
+            res[y][x] = {nr, ng, nb};
+        }
+    }
+    return res;
+}
+
+std::vector<std::vector<std::vector<int>>> blurImg (std::vector<std::vector<std::vector<int>>> &img, int width, int height, int passes){
+    auto blurred = gaussianBlur(img, width, height);
+    for(int i=1; i<passes; i++){
+        blurred = gaussianBlur(blurred, width, height);
+    }
+    return blurred;
+}
+
 // Função para salvar imagem segmentada em PPM
 void savePPM(
     const std::string &filename, 

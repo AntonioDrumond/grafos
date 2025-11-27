@@ -18,6 +18,12 @@ int main (int argc, char *argv[]) {
 //	    print_ppm(image, width, height);
 
     WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height, true);
+    clock_t preblur = clock();
+    image = blurImg(image, width, height, 10);
+    clock_t postblur = clock();
+    double tim = (double)(postblur-preblur);
+    printf("runtime: %lf\n", (tim/CLOCKS_PER_SEC));
+
     clock_t graphFromMatrix = clock();
     WeightedGraph* T = kruskal_segmentation(&g, 6, width);
     clock_t kruskal = clock();
@@ -36,7 +42,7 @@ int main (int argc, char *argv[]) {
 
     clock_t end = clock();
     double time = (double)(end-start);
-    // printf("Execution time:\n\nMatrix From image: %lf\nGraph from matrix: %lf\nKruskal: %lf\nAvg colors: %lf\nMatrix from graph: %lf\nSave matrix: %lf\n", (((double)(mkImage-start))/CLOCKS_PER_SEC), (((double)(graphFromMatrix-mkImage))/CLOCKS_PER_SEC), (((double)(kruskal-graphFromMatrix))/CLOCKS_PER_SEC), (((double)(painting-kruskal))/CLOCKS_PER_SEC), (((double)(matrixFromGraph-painting))/CLOCKS_PER_SEC), (((double)(saving-matrixFromGraph))/CLOCKS_PER_SEC));
+    printf("Execution time:\n\nMatrix From image: %lf\nGraph from matrix: %lf\nKruskal: %lf\nAvg colors: %lf\nMatrix from graph: %lf\nSave matrix: %lf\n", (((double)(mkImage-start))/CLOCKS_PER_SEC), (((double)(graphFromMatrix-mkImage))/CLOCKS_PER_SEC), (((double)(kruskal-graphFromMatrix))/CLOCKS_PER_SEC), (((double)(painting-kruskal))/CLOCKS_PER_SEC), (((double)(matrixFromGraph-painting))/CLOCKS_PER_SEC), (((double)(saving-matrixFromGraph))/CLOCKS_PER_SEC));
     printf("runtime: %lf\n", (time/CLOCKS_PER_SEC));
 
     return 0;
