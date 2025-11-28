@@ -265,12 +265,16 @@ std::vector<std::vector<std::vector<int>>> sobelOperator(std::vector<std::vector
                 // nry += 0;
                 // ngy += 0;
                 // nby += 0;
+            } else {
+                nrx += 2 * img[y][x][0];
             }
             if (!left) {
                 nrx += -2 * img[y][x-1][0];
                 // nry += 0;
                 // ngy += 0;
                 // nby += 0;
+            } else {
+                nrx += -2 * img[y][x][0];
             }
             if (!left && !bot){
                 nrx += -1 * img[y-1][x-1][0];
@@ -313,41 +317,73 @@ std::vector<std::vector<std::vector<int>>> gaussianBlur (std::vector<std::vector
                 nr += 2 * img[y+1][x][0];
                 ng += 2 * img[y+1][x][1];
                 nb += 2 * img[y+1][x][2];
+            } else {
+                nr += 2 * img[y][x][0];
+                ng += 2 * img[y][x][1];
+                nb += 2 * img[y][x][2];
             }
             if (!bot) {
                 nr += 2 * img[y-1][x][0];
                 ng += 2 * img[y-1][x][1]; 
                 nb += 2 * img[y-1][x][2];
+            } else {
+                nr += 2 * img[y][x][0];
+                ng += 2 * img[y][x][1];
+                nb += 2 * img[y][x][2];
             }
             if (!right) {
                 nr += 2 * img[y][x+1][0];
                 ng += 2 * img[y][x+1][1];
                 nb += 2 * img[y][x+1][2];
+            } else {
+                nr += 2 * img[y][x][0];
+                ng += 2 * img[y][x][1];
+                nb += 2 * img[y][x][2];
             }
             if (!left) {
                 nr += 2 * img[y][x-1][0];
                 ng += 2 * img[y][x-1][1];
                 nb += 2 * img[y][x-1][2];
+            } else {
+                nr += 2 * img[y][x][0];
+                ng += 2 * img[y][x][1];
+                nb += 2 * img[y][x][2];
             }
             if (!left && !bot){
                 nr += img[y-1][x-1][0];
                 ng += img[y-1][x-1][1];
                 nb += img[y-1][x-1][2];
+            } else {
+                nr += img[y][x][0];
+                ng += img[y][x][1];
+                nb += img[y][x][2];
             }
             if (!left && !top){
                 nr += img[y+1][x-1][0];
                 ng += img[y+1][x-1][1];
                 nb += img[y+1][x-1][2];
+            } else {
+                nr += img[y][x][0];
+                ng += img[y][x][1];
+                nb += img[y][x][2];
             }
             if (!right&& !bot){
                 nr += img[y-1][x+1][0];
                 ng += img[y-1][x+1][1];
                 nb += img[y-1][x+1][2];
+            } else {
+                nr += img[y][x][0];
+                ng += img[y][x][1];
+                nb += img[y][x][2];
             }
             if (!right && !top){
                 nr += img[y+1][x+1][0];
                 ng += img[y+1][x+1][1];
                 nb += img[y+1][x+1][2];
+            } else {
+                nr += img[y][x][0];
+                ng += img[y][x][1];
+                nb += img[y][x][2];
             }
             nr /= 16;
             ng /= 16;
