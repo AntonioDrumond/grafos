@@ -235,6 +235,7 @@ public:
     static WeightedGraph from_ppm_matrix(
         std::vector<std::vector<std::vector<int>>> &img,
         int width, int height,
+		double wscaling = 0.0,
         bool directed = false
     ) {
         int nVerts = width * height;
@@ -262,32 +263,46 @@ public:
             if (!leftEdge && !underEdge) { // Diagonal esq-baixo
                 int other = (x-1) + ( (y+1) * width );
                 // std::cout << "(diag esq baixo) i = " << i << " | other = " << other << std::endl;
+				//
                 double diff = rgb_diff(img[y][x], img[y+1][x-1]);
-                res.add_edge(i, other, diff);
+				double G = rgb_max(img[y][x], img[y+1][x-1]);
+				double w = G * wscaling;
+
+                res.add_edge(i, other, diff+w);
             }
 
             if (!underEdge) { // Para baixo
                 int other = (x) + ( (y+1) * width );
                 // std::cout << "(baixo) i = " << i << " | other = " << other << std::endl;
+
                 double diff = rgb_diff(img[y][x], img[y+1][x]);
-                res.add_edge(i, other, diff);
+				double G = rgb_max(img[y][x], img[y+1][x]);
+				double w = (G * wscaling);
+
+                res.add_edge(i, other, diff+w);
             }
 
             if (!underEdge && !rightEdge) { // Diagonal baixo-direita
                 int other = (x+1) + ( (y+1) * width );
                 // std::cout << "(diag baix esq) i = " << i << " | other = " << other << std::endl;
+
                 double diff = rgb_diff(img[y][x], img[y+1][x+1]);
-                res.add_edge(i, other, diff);
+				double G = rgb_max(img[y][x], img[y+1][x+1]);
+				double w = (G * wscaling);
+
+                res.add_edge(i, other, diff+w);
             }
 
             if (!rightEdge) { // Para direita
                 int other = (x+1) + ( (y) * width );
                 // std::cout << "(direita) i = " << i << " | other = " << other << std::endl;
-                double diff = rgb_diff(img[y][x], img[y][x+1]);
-                res.add_edge(i, other, diff);
-            }
 
-            // printf("\n\n");
+                double diff = rgb_diff(img[y][x], img[y][x+1]);
+				double G = rgb_max(img[y][x], img[y][x+1]);
+				double w = (G * wscaling);
+
+                res.add_edge(i, other, diff+w);
+            }
 
         }
 

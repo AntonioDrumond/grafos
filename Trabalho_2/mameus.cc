@@ -2,6 +2,10 @@
 #include "mst.h"
 #include <ctime>
 
+double getRuntime (clock_t start, clock_t end) {
+	return (((double)(end-start)/CLOCKS_PER_SEC));
+}
+
 int main (int argc, char *argv[]) {
     clock_t start = clock();
     int width, height;
@@ -16,37 +20,44 @@ int main (int argc, char *argv[]) {
     // std::cout<< "valor da altura: "<<height<<std::endl;
 
 //	    print_ppm(image, width, height);
+
+    WeightedGraph G = WeightedGraph::from_ppm_matrix(image, width, height, 0.0);
+
+	clock_t grayscale = clock();
     grayscaleImg(image, width, height);
     savePPM_matrix("grayscale.ppm", image, width, height);
 
-    image = blurImg(image, width, height, 3);
+	clock_t blur = clock();
+    image = blurImg(image, width, height, 8);
     savePPM_matrix("blurred.ppm", image, width, height);
 
-    lightenImg(image, width, height, 1.5);
-    savePPM_matrix("light.ppm", image, width, height);
-
-    WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height, true);
+	clock_t sobel_start = clock();
+	std::vector<std::vector<std::vector<int>>> sobel = sobelOperator(image, width, height);
+    savePPM_matrix("sobel.ppm", sobel, width, height);
 
     clock_t graphFromMatrix = clock();
-    WeightedGraph* T = kruskal_segmentation(&g, 6, width);
+    WeightedGraph S = WeightedGraph::from_ppm_matrix(sobel, width, height, 15.0);
+
     clock_t kruskal = clock();
+    WeightedGraph* T = kruskal_segmentation(G, &S, width, 1000);
 
 //	    T->avg_colors_components();
-    clock_t painting = clock();
     auto t = T->to_ppm_matrix(width, height);
+
     clock_t matrixFromGraph = clock();
     savePPM_matrix("result.ppm", t, width, height);
-    clock_t saving = clock();
-
-    std::cout << "\n\n";
-//	    T->print_raw();
-    std::cout << "\n\n";
-    // g.print_csacademy();
 
     clock_t end = clock();
-    double time = (double)(end-start);
-    printf("Execution time:\n\nMatrix From image: %lf\nGraph from matrix: %lf\nKruskal: %lf\nAvg colors: %lf\nMatrix from graph: %lf\nSave matrix: %lf\n", (((double)(mkImage-start))/CLOCKS_PER_SEC), (((double)(graphFromMatrix-mkImage))/CLOCKS_PER_SEC), (((double)(kruskal-graphFromMatrix))/CLOCKS_PER_SEC), (((double)(painting-kruskal))/CLOCKS_PER_SEC), (((double)(matrixFromGraph-painting))/CLOCKS_PER_SEC), (((double)(saving-matrixFromGraph))/CLOCKS_PER_SEC));
-    printf("runtime: %lf\n", (time/CLOCKS_PER_SEC));
 
+    printf("Execution time:\n\n");
+	printf("Matrix From image: %lf\n", getRuntime(start, mkImage));
+	printf("Graph from matrix: %lf\n", getRuntime(mkImage, graphFromMatrix));
+	printf("-> Grayscale: %lf\n", getRuntime(grayscale, blur));
+	printf("-> Gaussian: %lf\n", getRuntime(blur, sobel_start));
+	printf("-> Sobel: %lf\n", getRuntime(sobel_start, graphFromMatrix));
+	printf("Graph from matrix: %lf\n", getRuntime(graphFromMatrix, kruskal));
+	printf("Kruskal: %lf\n", getRuntime(kruskal, matrixFromGraph));
+	printf("Matrix from graph: %lf\n", getRuntime(matrixFromGraph, end));
+	printf("runtime: %lf\n", getRuntime(start, end));
     return 0;
 }
