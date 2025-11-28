@@ -63,7 +63,7 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 	int union_find [3][vert_n];
 	for (int i = 0; i < vert_n; i++) {
 		union_find[0][i] = i; // ancestor
-		union_find[1][i] = 0; // rank
+		union_find[1][i] = 1; // rank
 		union_find[2][i] = 0; // internal distance
 	}
 
@@ -103,7 +103,7 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 				(union_find[2][ancestor_v] + Tv)
 			);
 			
-			if (Mint < e.w) {
+			if (Mint >= e.w) {
 				T->add_edge(u, v, e.w);
 
 				// If u's ancestor has a higher or equal rank
@@ -129,29 +129,16 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 
 	// Paint components
 
-	std::vector<int> stack = std::vector<int>(vert_n);
 	std::vector<RGB> colors_original = G.getPixColor();
 	std::vector<RGB> colors_sobel = S->getPixColor();
 
 	for (int i = 0; i < vert_n; i++) {
 		int ancestor_u = i;
 		while (ancestor_u != union_find[0][ancestor_u]) {
-			stack.push_back(ancestor_u);
 			ancestor_u = union_find[0][ancestor_u];
 		}
-
-		RGB ancestor_color = colors_original[ancestor_u];
-
-		if (ancestor_u != i) {
-			while (!stack.empty()) {
-				int u = stack.back();
-				stack.pop_back();
-				colors_sobel[u] = ancestor_color;
-				union_find[0][u] = u;
-			}
-		} else {
-			colors_sobel[ancestor_u] = ancestor_color;
-		}
+		union_find[0][i] = ancestor_u;
+		colors_sobel[i] = colors_original[ancestor_u];
 	}
 
 	T->setPixColor(colors_sobel);

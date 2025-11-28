@@ -28,7 +28,7 @@ int main (int argc, char *argv[]) {
     savePPM_matrix("grayscale.ppm", image, width, height);
 
 	clock_t blur = clock();
-    image = blurImg(image, width, height, 8);
+    image = blurImg(image, width, height, 5);
     savePPM_matrix("blurred.ppm", image, width, height);
 
 	clock_t sobel_start = clock();
@@ -36,10 +36,10 @@ int main (int argc, char *argv[]) {
     savePPM_matrix("sobel.ppm", sobel, width, height);
 
     clock_t graphFromMatrix = clock();
-    WeightedGraph S = WeightedGraph::from_ppm_matrix(sobel, width, height, 15.0);
+    WeightedGraph S = WeightedGraph::from_ppm_matrix(sobel, width, height, 1.5);
 
     clock_t kruskal = clock();
-    WeightedGraph* T = kruskal_segmentation(G, &S, width, 1000);
+    WeightedGraph* T = kruskal_segmentation(G, &S, width, 800);
 
 //	    T->avg_colors_components();
     auto t = T->to_ppm_matrix(width, height);
