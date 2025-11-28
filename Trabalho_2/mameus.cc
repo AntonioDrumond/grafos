@@ -16,11 +16,13 @@ int main (int argc, char *argv[]) {
     // std::cout<< "valor da altura: "<<height<<std::endl;
 
 //	    print_ppm(image, width, height);
+    grayscaleImg(image, width, height);
+    savePPM_matrix("grayscale.ppm", image, width, height);
 
-    image = blurImg(image, width, height, 7);
+    image = blurImg(image, width, height, 3);
     savePPM_matrix("blurred.ppm", image, width, height);
 
-    lightenImg(image, width, height, 1.4);
+    lightenImg(image, width, height, 1.5);
     savePPM_matrix("light.ppm", image, width, height);
 
     WeightedGraph g = WeightedGraph::from_ppm_matrix(image, width, height, true);
@@ -29,7 +31,7 @@ int main (int argc, char *argv[]) {
     WeightedGraph* T = kruskal_segmentation(&g, 6, width);
     clock_t kruskal = clock();
 
-    T->avg_colors_components();
+//	    T->avg_colors_components();
     clock_t painting = clock();
     auto t = T->to_ppm_matrix(width, height);
     clock_t matrixFromGraph = clock();

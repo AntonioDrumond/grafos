@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <stdint.h>
 
 #ifndef EDGE_H
 #define EDGE_H
@@ -305,6 +306,20 @@ void lightenImg(std::vector<std::vector<std::vector<int>>> &img, int width, int 
             if(img[y][x][0] > 255) img[y][x][0] = 255;
             if(img[y][x][1] > 255) img[y][x][1] = 255;
             if(img[y][x][2] > 255) img[y][x][2] = 255;
+        }
+    }
+}
+
+void grayscaleImg (std::vector<std::vector<std::vector<int>>> &img, int width, int height) {
+    for(int y=0; y<height; y++){
+        for(int x=0; x<width; x++){
+			uint8_t r = img[y][x][0];
+			uint8_t g = img[y][x][1];
+			uint8_t b = img[y][x][2];
+			uint8_t color = ((double)(r+g+b)/3.0);
+			img[y][x][0] = color;
+			img[y][x][1] = color;
+			img[y][x][2] = color;
         }
     }
 }

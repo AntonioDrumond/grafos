@@ -109,5 +109,29 @@ WeightedGraph* kruskal_segmentation (WeightedGraph* G, double max_weight, int wi
 			}
 		}
 	}
+
+	// Paint components
+
+	std::vector<int> stack = std::vector<int>(vert_n);
+	std::vector<RGB> colors = T->getPixColor();
+
+	for (int i = 0; i < vert_n; i++) {
+		int ancestor_u = i;
+		while (ancestor_u != union_find[0][ancestor_u]) {
+			stack.push_back(ancestor_u);
+			ancestor_u = union_find[0][ancestor_u];
+		}
+
+		if (ancestor_u != i) {
+			while (!stack.empty()) {
+				int u = stack.back();
+				stack.pop_back();
+				colors[u] = colors[ancestor_u];
+				union_find[0][u] = u;
+			}
+		}
+	}
+	T->setPixColor(colors);
+
 	return (T);
 }
