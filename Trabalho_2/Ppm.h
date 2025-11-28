@@ -235,6 +235,94 @@ void savePPM_matrix(
     }
 }
 
+std::vector<std::vector<std::vector<int>>> sobelOperator(std::vector<std::vector<std::vector<int>>> &img, int width, int height){
+    std::vector<std::vector<std::vector<int>>> res;
+    res.resize(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
+    for(int y=0; y<height; y++){
+        for(int x=0; x<width; x++){
+            bool left = x < 1,
+                 right = x > width-2,
+                 bot = y < 1,
+                 top = y > height-2;
+            int nrx = 0,
+                ngx = 0,
+                nbx = 0,
+                nry = 0,
+                ngy = 0,
+                nby = 0;
+            if (!top) {
+                // nrx += 0;
+                // ngx += 0;
+                // nbx += 0;
+                nry += -2 * img[y+1][x][0];
+                ngy += -2 * img[y+1][x][1];
+                nby += -2 * img[y+1][x][2];
+            }
+            if (!bot) {
+                // nrx += 0;
+                // ngx += 0;
+                // nbx += 0;
+                nry += 2 * img[y-1][x][0];
+                ngy += 2 * img[y-1][x][1]; 
+                nby += 2 * img[y-1][x][2];
+            }
+            if (!right) {
+                nrx += 2 * img[y][x+1][0];
+                ngx += 2 * img[y][x+1][1];
+                nbx += 2 * img[y][x+1][2];
+                // nry += 0;
+                // ngy += 0;
+                // nby += 0;
+            }
+            if (!left) {
+                nrx += -2 * img[y][x-1][0];
+                ngx += -2 * img[y][x-1][1];
+                nbx += -2 * img[y][x-1][2];
+                // nry += 0;
+                // ngy += 0;
+                // nby += 0;
+            }
+            if (!left && !bot){
+                nrx += -1 * img[y-1][x-1][0];
+                ngx += -1 * img[y-1][x-1][1];
+                nbx += -1 * img[y-1][x-1][2];
+                nry += img[y-1][x-1][0];
+                ngy += img[y-1][x-1][1];
+                nby += img[y-1][x-1][2];
+            }
+            if (!left && !top){
+                nrx += -1 * img[y+1][x-1][0];
+                ngx += -1 * img[y+1][x-1][1];
+                nbx += -1 * img[y+1][x-1][2];
+                nry += -1 * img[y+1][x-1][0];
+                ngy += -1 * img[y+1][x-1][1];
+                nby += -1 * img[y+1][x-1][2];
+            }
+            if (!right&& !bot){
+                nrx += img[y-1][x+1][0];
+                ngx += img[y-1][x+1][1];
+                nbx += img[y-1][x+1][2];
+                nry += img[y-1][x+1][0];
+                ngy += img[y-1][x+1][1];
+                nby += img[y-1][x+1][2];
+            }
+            if (!right && !top){
+                nrx += img[y+1][x+1][0];
+                ngx += img[y+1][x+1][1];
+                nbx += img[y+1][x+1][2];
+                nry += -1 * img[y+1][x+1][0];
+                ngy += -1 * img[y+1][x+1][1];
+                nby += -1 * img[y+1][x+1][2];
+            }
+            int nr = std::sqrt(nrx * nrx + nry * nry);
+            int ng = std::sqrt(ngx * ngx + ngy * ngy);
+            int nb = std::sqrt(nbx * nbx + nby * nby);
+            res[y][x] = {nr, ng, nb};
+        }
+    }
+    return res;
+}
+
 std::vector<std::vector<std::vector<int>>> gaussianBlur (std::vector<std::vector<std::vector<int>>> &img, int width, int height){
     std::vector<std::vector<std::vector<int>>> res;
     res.resize(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
