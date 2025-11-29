@@ -109,12 +109,12 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 				// If u's ancestor has a higher or equal rank
 				if (union_find[1][ancestor_u] >= union_find[1][ancestor_v]) { 
 					union_find[0][ancestor_v] = ancestor_u; // Set parent 
-					union_find[1][ancestor_u]++; 			// Increase rank
+					union_find[1][ancestor_u] += union_find[1][ancestor_v];// Increase rank
 
 				// If v's ancestor has a higher rank
 				} else {
 					union_find[0][ancestor_u] = ancestor_v; // Set parent 
-					union_find[1][ancestor_v]++; 			// Increase rank
+					union_find[1][ancestor_v] += union_find[1][ancestor_u];// Increase rank
 				}
 			}
 
