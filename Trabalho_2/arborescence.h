@@ -380,16 +380,33 @@ inline std::vector<std::vector<std::vector<int>>> ArborescenceResult::to_ppm_mat
         nVerts = maxPixels;
     }
 
+    std::unordered_map<int, RGB> comp_colors;
+    auto color_for_component = [&](int comp_id) {
+        auto it = comp_colors.find(comp_id);
+        if (it != comp_colors.end()) {
+            return it->second;
+        }
+        RGB color;
+        int shift = 0;
+        do {
+            color.r = (comp_id * 79 + 43 + shift) % 256;
+            color.g = (comp_id * 47 + 67 + shift) % 200;
+            color.b = (comp_id * 113 + 89 + shift) % 256;
+            shift += 31;
+        } while (color.g > 150 && color.r < 100 && color.b < 100);
+        comp_colors[comp_id] = color;
+        return color;
+    };
+
     for (int i = 0; i < nVerts; i++) {
-        int root = parent_of[i];
-        if (root < 0 || root >= static_cast<int>(original_colors.size())) {
-            root = i;
+        int comp_id = parent_of[i];
+        if (comp_id < 0) {
+            comp_id = 0;
         }
 
         int x = i % width;
         int y = i / width;
-
-        const RGB& color = original_colors[root];
+        RGB color = color_for_component(comp_id);
         result[y][x][0] = color.r;
         result[y][x][1] = color.g;
         result[y][x][2] = color.b;
