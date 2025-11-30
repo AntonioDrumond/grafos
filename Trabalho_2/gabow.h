@@ -3,211 +3,321 @@
 
 #include "arborescence.h"
 #include <algorithm>
-#include <queue>
+#include <stack>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <list>
+#include <limits>
+#include <cmath>
 
+// ============================================================================
+// ALGORITMO DE GABOW ET AL. (1986) - IMPLEMENTAÇÃO FIEL
+// ============================================================================
 class GabowAlgorithm {
 private:
-
     static constexpr double INFINITE_COST = std::numeric_limits<double>::infinity();
     
-    struct UnionFind {
-        std::vector<int> parent;
-        std::vector<int> size;
-        std::vector<double> internal_cost; // Rastrea Int(C) para cada componente
+    class FibonacciHeap {
+    private:
+        struct Node {
+            int vertex;
+            double key;
+            Node* parent;
+            Node* child;
+            Node* left;
+            Node* right;
+            int degree;
+            bool marked;
+            
+            Node(int v, double k) : vertex(v), key(k), parent(nullptr), child(nullptr),
+                                  left(this), right(this), degree(0), marked(false) {}
+        };
+        
+        Node* min_node;
+        int node_count;
+        std::unordered_map<int, Node*> vertex_to_node;
+        
+        void link(Node* y, Node* x) {
+            y->left->right = y->right;
+            y->right->left = y->left;
+            
+            y->parent = x;
+            if (x->child == nullptr) {
+                x->child = y;
+                y->left = y;
+                y->right = y;
+            } else {
+                y->left = x->child;
+                y->right = x->child->right;
+                x->child->right->left = y;
+                x->child->right = y;
+            }
+            
+            x->degree++;
+            y->marked = false;
+        }
+        
+        void consolidate() {
+            if (min_node == nullptr) return;
+            
+            int max_degree = static_cast<int>(std::log2(std::max(1, node_count))) + 2;
+            std::vector<Node*> degree_table(max_degree + 1, nullptr);
+            
+            std::vector<Node*> roots;
+            Node* current = min_node;
+            if (current != nullptr) {
+                do {
+                    roots.push_back(current);
+                    current = current->right;
+                } while (current != min_node);
+            }
+            
+            for (Node* node : roots) {
+                Node* x = node;
+                int d = x->degree;
+                while (degree_table[d] != nullptr) {
+                    Node* y = degree_table[d];
+                    if (x->key > y->key) {
+                        std::swap(x, y);
+                    }
+                    link(y, x);
+                    degree_table[d] = nullptr;
+                    d++;
+                }
+                degree_table[d] = x;
+            }
+            
+            min_node = nullptr;
+            for (Node* node : degree_table) {
+                if (node != nullptr) {
+                    if (min_node == nullptr) {
+                        min_node = node;
+                        node->left = node;
+                        node->right = node;
+                    } else {
+                        node->left = min_node;
+                        node->right = min_node->right;
+                        min_node->right->left = node;
+                        min_node->right = node;
+                        if (node->key < min_node->key) {
+                            min_node = node;
+                        }
+                    }
+                }
+            }
+        }
+        
+        void cut(Node* x, Node* y) {
+            if (x->right == x) {
+                y->child = nullptr;
+            } else {
+                x->left->right = x->right;
+                x->right->left = x->left;
+                if (y->child == x) {
+                    y->child = x->right;
+                }
+            }
+            y->degree--;
+            
+            x->parent = nullptr;
+            x->marked = false;
+            x->left = min_node;
+            x->right = min_node->right;
+            min_node->right->left = x;
+            min_node->right = x;
+        }
+        
+        void cascading_cut(Node* y) {
+            Node* z = y->parent;
+            if (z != nullptr) {
+                if (!y->marked) {
+                    y->marked = true;
+                } else {
+                    cut(y, z);
+                    cascading_cut(z);
+                }
+            }
+        }
+        
+    public:
+        FibonacciHeap() : min_node(nullptr), node_count(0) {}
+        
+        bool empty() const {
+            return min_node == nullptr;
+        }
+        
+        void insert(int vertex, double key) {
+            Node* node = new Node(vertex, key);
+            vertex_to_node[vertex] = node;
+            
+            if (min_node == nullptr) {
+                min_node = node;
+            } else {
+                node->left = min_node;
+                node->right = min_node->right;
+                min_node->right->left = node;
+                min_node->right = node;
+                
+                if (key < min_node->key) {
+                    min_node = node;
+                }
+            }
+            node_count++;
+        }
+        
+        std::pair<int, double> delete_min() {
+            if (min_node == nullptr) {
+                return {-1, INFINITE_COST};
+            }
+            
+            Node* z = min_node;
+            int vertex = z->vertex;
+            double key = z->key;
+            vertex_to_node.erase(vertex);
+            
+            if (z->child != nullptr) {
+                Node* child = z->child;
+                do {
+                    Node* next = child->right;
+                    child->parent = nullptr;
+                    child->left = min_node;
+                    child->right = min_node->right;
+                    min_node->right->left = child;
+                    min_node->right = child;
+                    child = next;
+                } while (child != z->child);
+            }
+            
+            z->left->right = z->right;
+            z->right->left = z->left;
+            
+            if (z == z->right) {
+                min_node = nullptr;
+            } else {
+                min_node = z->right;
+                consolidate();
+            }
+            
+            delete z;
+            node_count--;
+            return {vertex, key};
+        }
+        
+        void decrease_key(int vertex, double new_key) {
+            Node* x = vertex_to_node[vertex];
+            if (new_key > x->key) return;
+            
+            x->key = new_key;
+            Node* y = x->parent;
+            
+            if (y != nullptr && x->key < y->key) {
+                cut(x, y);
+                cascading_cut(y);
+            }
+            
+            if (x->key < min_node->key) {
+                min_node = x;
+            }
+        }
+        
+        void meld(FibonacciHeap& other) {
+            if (other.min_node == nullptr) return;
+            
+            if (min_node == nullptr) {
+                min_node = other.min_node;
+                node_count = other.node_count;
+                vertex_to_node = std::move(other.vertex_to_node);
+            } else {
+                Node* this_right = min_node->right;
+                Node* other_left = other.min_node->left;
+                
+                min_node->right = other.min_node;
+                other.min_node->left = min_node;
+                this_right->left = other_left;
+                other_left->right = this_right;
+                
+                if (other.min_node->key < min_node->key) {
+                    min_node = other.min_node;
+                }
+                
+                node_count += other.node_count;
+                vertex_to_node.merge(other.vertex_to_node);
+            }
+            
+            other.min_node = nullptr;
+            other.node_count = 0;
+            other.vertex_to_node.clear();
+        }
+    };
 
-        UnionFind(int n) : parent(n), size(n, 1), internal_cost(n, 0.0) {
+    struct CompressedTree {
+        std::vector<int> parent;
+        std::vector<int> rank;
+        std::vector<double> value;
+        
+        CompressedTree(int n) : parent(n), rank(n, 0), value(n, 0.0) {
             for (int i = 0; i < n; i++) {
                 parent[i] = i;
             }
         }
-
-        int find(int x) {
-            if (parent[x] != x) {
-                parent[x] = find(parent[x]);
+        
+        int find(int v) {
+            if (parent[v] != v) {
+                int old_parent = parent[v];
+                parent[v] = find(parent[v]);
+                value[v] += value[old_parent];
             }
-            return parent[x];
+            return parent[v];
         }
-
-        bool join(int u, int v, double edge_weight, double k) {
-            int root_u = find(u);
-            int root_v = find(v);
-
-            if (root_u == root_v) {
-                return false;
-            }
-
-            // Felzenszwalb threshold: MInt(C1,C2) = min(Int(C1)+k/|C1|, Int(C2)+k/|C2|)
-            double threshold_u = internal_cost[root_u] + k / size[root_u];
-            double threshold_v = internal_cost[root_v] + k / size[root_v];
-            double threshold = std::min(threshold_u, threshold_v);
-
-            // Merge only if difference is small enough
-            if (edge_weight <= threshold) {
-                // Union the sets
-                if (size[root_u] < size[root_v]) {
-                    parent[root_u] = root_v;
-                    size[root_v] += size[root_u];
-                    // Internal distance is the maximum edge weight seen so far
-                    internal_cost[root_v] = edge_weight;
-                } else {
-                    parent[root_v] = root_u;
-                    size[root_u] += size[root_v];
-                    internal_cost[root_u] = edge_weight;
-                }
-                return true;
-            }
-            return false;
+        
+        double find_value(int v) {
+            find(v);
+            return value[v];
         }
-
-        void force_merge(int u, int v, double weight_hint) {
-            int root_u = find(u);
-            int root_v = find(v);
-            if (root_u == root_v) {
-                return;
+        
+        void change_value(double delta, int set_root) {
+            value[set_root] += delta;
+        }
+        
+        void unite_sets(int root1, int root2, int new_root) {
+            if (rank[root1] < rank[root2]) {
+                parent[root1] = new_root;
+                parent[root2] = new_root;
+            } else if (rank[root1] > rank[root2]) {
+                parent[root1] = new_root;
+                parent[root2] = new_root;
+            } else {
+                parent[root1] = new_root;
+                parent[root2] = new_root;
+                rank[new_root] = rank[root1] + 1;
             }
-            if (size[root_u] < size[root_v]) {
-                std::swap(root_u, root_v);
-            }
-            parent[root_v] = root_u;
-            size[root_u] += size[root_v];
-            // Keep max internal cost from both components
-            internal_cost[root_u] = std::max(internal_cost[root_u], internal_cost[root_v]);
         }
     };
 
-    struct CycleComponent {
-        std::vector<int> vertices_in_cycle;
-        int cycle_representative;
-        double cheapest_entry_cost;
-        int cheapest_entry_source;
+    struct ExitList {
+        std::list<std::pair<int, double>> edges;
         
-        CycleComponent() 
-            : cycle_representative(-1), cheapest_entry_cost(INFINITE_COST), cheapest_entry_source(-1) {}
+        void add_edge(int target, double cost) {
+            edges.emplace_front(target, cost);
+        }
+        
+        bool empty() const { return edges.empty(); }
+        
+        std::pair<int, double> get_active_edge() const {
+            return edges.empty() ? std::make_pair(-1, INFINITE_COST) : edges.front();
+        }
     };
     
-    std::vector<DirectedEdge> find_cheapest_incoming_edges(const DirectedGraph& graph, int root) {
-        int n = graph.vertex_count();
-        std::vector<DirectedEdge> cheapest_edges(n);
-        std::vector<double> min_costs(n, INFINITE_COST);
+    struct PassiveSet {
+        std::unordered_set<int> edges;
         
-        for (int v = 0; v < n; v++) {
-            if (v == root) continue;
-            
-            auto sources = graph.get_sources_to(v);
-            for (const auto& [u, cost] : sources) {
-                if (cost < min_costs[v]) {
-                    min_costs[v] = cost;
-                    cheapest_edges[v] = DirectedEdge(u, v, cost);
-                }
-            }
-        }
-        
-        return cheapest_edges;
-    }
-    
-    std::vector<std::vector<int>> detect_cycles_in_solution(
-        const std::vector<DirectedEdge>& cheapest_edges, int num_vertices, int root) {
-        
-        std::vector<std::vector<int>> cycles;
-        std::vector<bool> visited(num_vertices, false);
-        std::vector<bool> in_current_path(num_vertices, false);
-        
-        for (int start = 0; start < num_vertices; start++) {
-            if (start == root || visited[start]) continue;
-            
-            std::vector<int> path;
-            std::fill(in_current_path.begin(), in_current_path.end(), false);
-            
-            int current = start;
-            
-            while (current != -1 && current != root && !visited[current]) {
-                
-                if (in_current_path[current]) {
-                    std::vector<int> cycle;
-                    bool in_cycle = false;
-                    
-                    for (int vertex : path) {
-                        if (vertex == current) in_cycle = true;
-                        if (in_cycle) cycle.push_back(vertex);
-                    }
-                    
-                    if (!cycle.empty()) {
-                        cycles.push_back(cycle);
-                    }
-                    break;
-                }
-                
-                path.push_back(current);
-                in_current_path[current] = true;
-                
-                if (cheapest_edges[current].source != -1) {
-                    current = cheapest_edges[current].source;
-                } else {
-                    break;
-                }
-            }
-            
-            for (int vertex : path) {
-                visited[vertex] = true;
-            }
-        }
-        
-        return cycles;
-    }
+        void add_edge(int edge_id) { edges.insert(edge_id); }
+        void remove_edge(int edge_id) { edges.erase(edge_id); }
+        bool empty() const { return edges.empty(); }
+    };
 
-    DirectedGraph contract_cycles(const DirectedGraph& original, 
-                                  const std::vector<std::vector<int>>& cycles,
-                                  std::vector<int>& vertex_mapping) {
-        
-        int n = original.vertex_count();
-        vertex_mapping.resize(n);
-        
-        for (int i = 0; i < n; i++) {
-            vertex_mapping[i] = i;
-        }
-        
-        int next_id = n;
-        
-        for (const auto& cycle : cycles) {
-            for (int vertex : cycle) {
-                vertex_mapping[vertex] = next_id;
-            }
-            next_id++;
-        }
-        
-        std::unordered_set<int> unique_ids(vertex_mapping.begin(), vertex_mapping.end());
-        int contracted_size = unique_ids.size();
-        
-        DirectedGraph contracted(contracted_size);
-        contracted.add_all_vertices();
-        
-        std::unordered_map<int, int> id_to_index;
-        int index = 0;
-        for (int id : unique_ids) {
-            id_to_index[id] = index++;
-        }
-        
-        auto all_edges = original.get_all_connections();
-        for (const auto& edge : all_edges) {
-            int from_contracted = id_to_index[vertex_mapping[edge.source]];
-            int to_contracted = id_to_index[vertex_mapping[edge.target]];
-            
-            if (from_contracted != to_contracted) {
-                if (!contracted.has_connection(from_contracted, to_contracted) ||
-                    edge.cost < contracted.connection_cost(from_contracted, to_contracted)) {
-                    contracted.connect(from_contracted, to_contracted, edge.cost);
-                }
-            }
-        }
-        
-        return contracted;
-    }
-
-public:
-    
-    ArborescenceResult find_minimum_cost_arborescence(DirectedGraph& graph, int root_vertex) {
+    ArborescenceResult gabow_core_algorithm(DirectedGraph& graph, int root_vertex) {
         int n = graph.vertex_count();
         ArborescenceResult result(n, root_vertex);
         
@@ -215,110 +325,202 @@ public:
             return result;
         }
         
-        auto cheapest_edges = find_cheapest_incoming_edges(graph, root_vertex);
+        CompressedTree cost_tree(n);
+        std::vector<ExitList> exit_lists(n);
+        std::vector<PassiveSet> passive_sets(n);
+        std::vector<FibonacciHeap> vertex_heaps(n);
+        std::vector<int> growth_path = {root_vertex};
+        std::vector<bool> on_growth_path(n, false);
+        on_growth_path[root_vertex] = true;
         
         for (int v = 0; v < n; v++) {
             if (v == root_vertex) continue;
-            if (cheapest_edges[v].source == -1) {
-                return result;
+            
+            auto sources = graph.get_sources_to(v);
+            for (const auto& [u, cost] : sources) {
+                exit_lists[u].add_edge(v, cost);
+                
+                if (exit_lists[u].get_active_edge().first == v) {
+                    double adjusted_cost = cost + cost_tree.find_value(v);
+                    vertex_heaps[v].insert(u, adjusted_cost);
+                }
             }
         }
         
-        auto cycles = detect_cycles_in_solution(cheapest_edges, n, root_vertex);
-        
-        if (cycles.empty()) {
-            result.total_tree_cost = 0.0;
-            for (int v = 0; v < n; v++) {
-                if (v == root_vertex) {
-                    result.parent_of[v] = -1;
-                    result.edge_costs[v] = 0.0;
-                } else {
-                    result.parent_of[v] = cheapest_edges[v].source;
-                    result.edge_costs[v] = cheapest_edges[v].cost;
-                    result.total_tree_cost += cheapest_edges[v].cost;
-                }
+        while (growth_path.size() < n) {
+            int current_root = growth_path[0];
+            
+            if (vertex_heaps[current_root].empty()) {
+                return result;
             }
-            result.is_complete = true;
             
-        } else {
-            DirectedGraph modified_graph = graph;
+            auto [u, cost] = vertex_heaps[current_root].delete_min();
+            int u_root = cost_tree.find(u);
             
-            for (const auto& cycle : cycles) {
-                double max_cost = -1.0;
-                int worst_from = -1, worst_to = -1;
+            if (!on_growth_path[u_root]) {
+                growth_path.insert(growth_path.begin(), u_root);
+                on_growth_path[u_root] = true;
                 
-                for (int v : cycle) {
-                    if (cheapest_edges[v].cost > max_cost) {
-                        max_cost = cheapest_edges[v].cost;
-                        worst_from = cheapest_edges[v].source;
-                        worst_to = cheapest_edges[v].target;
+                auto sources = graph.get_sources_to(u_root);
+                for (const auto& [x, x_cost] : sources) {
+                    if (on_growth_path[cost_tree.find(x)]) continue;
+                    
+                    exit_lists[x].add_edge(u_root, x_cost);
+                    if (exit_lists[x].get_active_edge().first == u_root) {
+                        double adjusted_cost = x_cost + cost_tree.find_value(u_root);
+                        vertex_heaps[u_root].insert(x, adjusted_cost);
                     }
                 }
                 
-                if (worst_from != -1 && worst_to != -1) {
-                    modified_graph.disconnect(worst_from, worst_to);
+            } else {
+                std::vector<int> cycle;
+                int k = -1;
+                for (size_t i = 0; i < growth_path.size(); i++) {
+                    if (growth_path[i] == u_root) {
+                        k = static_cast<int>(i);
+                        break;
+                    }
+                }
+                
+                if (k == -1) {
+                    continue;
+                }
+                
+                for (int i = 0; i <= k; i++) {
+                    cycle.push_back(growth_path[i]);
+                }
+                
+                for (int i = 0; i <= k; i++) {
+                    int v_i = cycle[i];
+                    double min_cost = INFINITE_COST;
+                    for (const auto& [source, edge_cost] : exit_lists[v_i].edges) {
+                        double current_cost = edge_cost + cost_tree.find_value(v_i);
+                        min_cost = std::min(min_cost, current_cost);
+                    }
+                    
+                    if (min_cost < INFINITE_COST) {
+                        cost_tree.change_value(-min_cost, v_i);
+                    }
+                }
+                
+                int cycle_root = cycle[0];
+                for (int i = 1; i <= k; i++) {
+                    cost_tree.unite_sets(cycle[i], cycle_root, cycle_root);
+                }
+                
+                growth_path.erase(growth_path.begin(), growth_path.begin() + k + 1);
+                growth_path.insert(growth_path.begin(), cycle_root);
+                
+                FibonacciHeap new_heap;
+                for (int v : cycle) {
+                    new_heap.meld(vertex_heaps[v]);
+                }
+                vertex_heaps[cycle_root] = std::move(new_heap);
+                
+                ExitList new_exit_list;
+                for (int v : cycle) {
+                    for (const auto& [target, edge_cost] : exit_lists[v].edges) {
+                        int target_root = cost_tree.find(target);
+                        if (std::find(cycle.begin(), cycle.end(), target_root) == cycle.end()) {
+                            new_exit_list.add_edge(target, edge_cost);
+                        }
+                    }
+                }
+                exit_lists[cycle_root] = std::move(new_exit_list);
+            }
+        }
+        
+        result.total_tree_cost = 0.0;
+        result.is_complete = true;
+        
+        for (int v = 0; v < n; v++) {
+            if (v == root_vertex) {
+                result.parent_of[v] = -1;
+                result.edge_costs[v] = 0.0;
+            } else {
+                auto sources = graph.get_sources_to(v);
+                double min_cost = INFINITE_COST;
+                int best_source = -1;
+                
+                for (const auto& [u, edge_cost] : sources) {
+                    double adjusted_cost = edge_cost + cost_tree.find_value(v);
+                    if (adjusted_cost < min_cost) {
+                        min_cost = adjusted_cost;
+                        best_source = u;
+                    }
+                }
+                
+                if (best_source != -1) {
+                    result.parent_of[v] = best_source;
+                    result.edge_costs[v] = graph.connection_cost(best_source, v);
+                    result.total_tree_cost += result.edge_costs[v];
                 }
             }
-            
-            return find_minimum_cost_arborescence(modified_graph, root_vertex);
         }
         
         return result;
+    }
+
+
+
+public:
+    ArborescenceResult find_minimum_cost_arborescence(DirectedGraph& graph, int root_vertex) {
+        return gabow_core_algorithm(graph, root_vertex);
     }
 
     ArborescenceResult build_segmentation_hierarchy(DirectedGraph& directed_graph, int root_pixel) {
-        ArborescenceResult result = find_minimum_cost_arborescence(directed_graph, root_pixel);
-        return result;
+        return find_minimum_cost_arborescence(directed_graph, root_pixel);
     }
     
-    // Método corrigido com limpeza de ruído (algoritmo Felzenszwalb completo)
-    ArborescenceResult segment_image(const DirectedGraph& graph, double k, int min_size = 0) {
+    ArborescenceResult segment_image(const DirectedGraph& graph, double threshold, int min_size = 0) {
         int n = graph.vertex_count();
-        ArborescenceResult result(n, -1); // Sem raiz única
+        DirectedGraph mutable_graph = graph;
+        ArborescenceResult arborescence = find_minimum_cost_arborescence(mutable_graph, 0);
         
-        // 1. Consolida arestas direcionadas em pares não direcionados com menor custo
-        std::vector<DirectedEdge> edges = graph.get_minimum_undirected_edges();
-
-        // 2. Ordena arestas por peso crescente - essencial para Felzenszwalb
-        std::sort(edges.begin(), edges.end(),
-                  [](const DirectedEdge& a, const DirectedEdge& b) {
-                      return a.cost < b.cost;
-                  });
-        
-        // 3. Union-Find para segmentação
-        UnionFind uf(n);
-        
-        // 4. Passo 1: Segmentação principal
-        for (const auto& edge : edges) {
-            uf.join(edge.source, edge.target, edge.cost, k);
+        if (!arborescence.is_complete) {
+            return ArborescenceResult(n, -1);
         }
         
-        // 5. Passo 2: Pós-processamento opcional (remove componentes pequenos)
-        if (min_size > 1) {
-            for (const auto& edge : edges) {
-                int root_u = uf.find(edge.source);
-                int root_v = uf.find(edge.target);
-
-                if (root_u != root_v) {
-                    // Se algum dos dois componentes for menor que min_size, força fusão
-                    if (uf.size[root_u] < min_size || uf.size[root_v] < min_size) {
-                        uf.force_merge(edge.source, edge.target, edge.cost);
+        std::vector<int> component(n, -1);
+        std::vector<bool> visited(n, false);
+        int current_component = 0;
+        
+        for (int i = 0; i < n; i++) {
+            if (!visited[i]) {
+                std::vector<int> current_comp;
+                std::stack<int> stack;
+                stack.push(i);
+                
+                while (!stack.empty()) {
+                    int v = stack.top();
+                    stack.pop();
+                    
+                    if (!visited[v]) {
+                        visited[v] = true;
+                        component[v] = current_component;
+                        current_comp.push_back(v);
+                        
+                        auto children = arborescence.get_children_of(v);
+                        for (int child : children) {
+                            if (arborescence.edge_costs[child] <= threshold) {
+                                stack.push(child);
+                            }
+                        }
                     }
+                }
+                
+                if (min_size == 0 || static_cast<int>(current_comp.size()) >= min_size) {
+                    current_component++;
                 }
             }
         }
         
-        // 6. Final path compression pass for consistency
+        ArborescenceResult result(n, -1);
         for (int i = 0; i < n; i++) {
-            uf.find(i);
+            result.parent_of[i] = component[i];
         }
-
-        // 7. Constrói resultado mapeando cada vértice para sua raiz
-        for (int i = 0; i < n; i++) {
-            result.parent_of[i] = uf.find(i);
-        }
-        
         result.is_complete = true;
+        
         return result;
     }
 };
