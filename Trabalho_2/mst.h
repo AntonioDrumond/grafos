@@ -9,6 +9,7 @@
 #include "edge.h"
 #endif
 
+
 struct minHeap {
 	bool operator()(const Edge& a, const Edge& b) const {
 		bool res = false;
@@ -145,3 +146,5 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 
 	return (T);
 }
+
+

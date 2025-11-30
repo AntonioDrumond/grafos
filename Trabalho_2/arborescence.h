@@ -1,6 +1,5 @@
-#ifndef ARBORESCENCE_H
-#define ARBORESCENCE_H
-
+#include "edge.h"
+#include "Graph.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -11,12 +10,6 @@
 #include <limits>
 #include <cmath>
 #include <climits>
-
-#ifndef EDGE_H
-#include "edge.h"
-#endif
-#include "Graph.h"
-
 
 struct DirectedEdge {
     int source;         // Vértice de origem 
@@ -61,9 +54,9 @@ public:
     std::vector<DirectedEdge> get_all_connections() const;                     // Todas as arestas do grafo
     
     void display() const;                                                 
-    bool is_reachable(int from, int to) const;                               // Verifica se o destino é alcançável a partir da origem
+    bool is_reachable(int from, int to) const;                               // Verifica se o destino é alcancável a partir da origem
     
-    static DirectedGraph build_from_mst(const WeightedGraph& mst, int root_pixel);  // Converte MST em grafo direcionado
+    static DirectedGraph from_weighted_graph(const WeightedGraph& weighted_graph);  // Converte WeightedGraph direcionado em DirectedGraph
 };
 
 
@@ -81,43 +74,283 @@ struct ArborescenceResult {
     int get_tree_depth_of(int vertex) const;              // Calcula profundidade 
     bool is_ancestor(int possible_ancestor, int descendant) const;  // Relação ancestral
     
-    std::vector<std::vector<int>> get_subtrees() const;           // Todas as subárvores
-    std::vector<int> get_path_to_root(int vertex) const;          // Caminho do vértice até a raiz
+    std::vector<std::vector<int>> get_subtrees() const;
+    std::vector<int> get_path_to_root(int vertex) const;
+    
+    // Converte arborescência para matriz de imagem PPM
+    std::vector<std::vector<std::vector<int>>> to_ppm_matrix(
+        int width, int height, const std::vector<RGB>& original_colors) const;
 };
 
+// ============================================================================
+// IMPLEMENTAÇÕES INLINE
+// ============================================================================
 
-class MinimumArborescenceAlgorithm {
-private:
+// DirectedEdge
+inline DirectedEdge::DirectedEdge() : source(-1), target(-1), cost(0.0) {}
 
-    static constexpr double INFINITE_COST = std::numeric_limits<double>::infinity(); 
+inline DirectedEdge::DirectedEdge(int from, int to, double weight) 
+    : source(from), target(to), cost(weight) {}
 
-    struct CycleComponent {
-        std::vector<int> vertices_in_cycle;     // Vértices que fazem parte deste ciclo
-        int cycle_representative;               // Vértice que representa este ciclo após contração
-        double cheapest_entry_cost;             // Menor custo para entrar neste ciclo
-        int cheapest_entry_source;              // De onde vem a aresta mais barata para entrar
+inline void DirectedEdge::show() const {}
+
+inline bool DirectedEdge::is_valid() const {
+    return source >= 0 && target >= 0 && cost >= 0.0;
+}
+
+// DirectedGraph
+inline DirectedGraph::DirectedGraph(int capacity) 
+    : max_vertices(capacity), current_vertices(0), outgoing(capacity), incoming(capacity) {}
+
+inline bool DirectedGraph::add_vertex() {
+    if (current_vertices < max_vertices) {
+        current_vertices++;
+        return true;
+    }
+    return false;
+}
+
+inline void DirectedGraph::add_all_vertices() {
+    current_vertices = max_vertices;
+}
+
+inline int DirectedGraph::vertex_count() const {
+    return current_vertices;
+}
+
+inline int DirectedGraph::capacity() const {
+    return max_vertices;
+}
+
+inline bool DirectedGraph::connect(int from, int to, double cost) {
+    if (from >= current_vertices || to >= current_vertices || from < 0 || to < 0) {
+        return false;
+    }
+    outgoing[from][to] = cost;
+    incoming[to][from] = cost;
+    return true;
+}
+
+inline bool DirectedGraph::disconnect(int from, int to) {
+    if (from >= current_vertices || to >= current_vertices || from < 0 || to < 0) {
+        return false;
+    }
+    outgoing[from].erase(to);
+    incoming[to].erase(from);
+    return true;
+}
+
+inline bool DirectedGraph::has_connection(int from, int to) const {
+    if (from >= current_vertices || to >= current_vertices || from < 0 || to < 0) {
+        return false;
+    }
+    return outgoing[from].find(to) != outgoing[from].end();
+}
+
+inline double DirectedGraph::connection_cost(int from, int to) const {
+    if (!has_connection(from, to)) {
+        return std::numeric_limits<double>::infinity();
+    }
+    return outgoing[from].at(to);
+}
+
+inline int DirectedGraph::total_connections() const {
+    int count = 0;
+    for (int u = 0; u < current_vertices; u++) {
+        count += outgoing[u].size();
+    }
+    return count;
+}
+
+inline std::unordered_map<int, double> DirectedGraph::get_destinations_from(int vertex) const {
+    if (vertex >= current_vertices || vertex < 0) {
+        return {};
+    }
+    return outgoing[vertex];
+}
+
+inline std::unordered_map<int, double> DirectedGraph::get_sources_to(int vertex) const {
+    if (vertex >= current_vertices || vertex < 0) {
+        return {};
+    }
+    return incoming[vertex];
+}
+
+inline std::vector<DirectedEdge> DirectedGraph::get_all_connections() const {
+    std::vector<DirectedEdge> edges;
+    for (int u = 0; u < current_vertices; u++) {
+        for (const auto& [v, cost] : outgoing[u]) {
+            edges.emplace_back(u, v, cost);
+        }
+    }
+    return edges;
+}
+
+inline void DirectedGraph::display() const {}
+
+inline bool DirectedGraph::is_reachable(int from, int to) const {
+    if (from == to) return true;
+    if (from >= current_vertices || to >= current_vertices || from < 0 || to < 0) {
+        return false;
+    }
+    
+    std::vector<bool> visited(current_vertices, false);
+    std::queue<int> queue;
+    queue.push(from);
+    visited[from] = true;
+    
+    while (!queue.empty()) {
+        int current = queue.front();
+        queue.pop();
         
-        CycleComponent();
-    };
+        for (const auto& [neighbor, cost] : outgoing[current]) {
+            if (neighbor == to) return true;
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.push(neighbor);
+            }
+        }
+    }
+    return false;
+}
+
+inline DirectedGraph DirectedGraph::from_weighted_graph(const WeightedGraph& weighted_graph) {
+    WeightedGraph& graph_ref = const_cast<WeightedGraph&>(weighted_graph);
+    int n = graph_ref.vert_count();
+    DirectedGraph directed(n);
+    directed.add_all_vertices();
     
-    std::vector<DirectedEdge> find_cheapest_incoming_edges(const DirectedGraph& graph, int root);
+    for (int u = 0; u < n; u++) {
+        auto neighbors = graph_ref.vert_neighbors(u);
+        for (const auto& [v, weights] : neighbors) {
+            if (!weights.empty()) {
+                directed.connect(u, v, weights[0]);
+            }
+        }
+    }
+    return directed;
+}
+
+// ArborescenceResult
+inline ArborescenceResult::ArborescenceResult(int num_vertices, int root) 
+    : parent_of(num_vertices, -1), edge_costs(num_vertices, 0.0), 
+      total_tree_cost(0.0), root_vertex(root), is_complete(false) {}
+
+inline void ArborescenceResult::display_tree() const {}
+
+inline std::vector<int> ArborescenceResult::get_children_of(int vertex) const {
+    std::vector<int> children;
+    for (int v = 0; v < parent_of.size(); v++) {
+        if (parent_of[v] == vertex) {
+            children.push_back(v);
+        }
+    }
+    return children;
+}
+
+inline int ArborescenceResult::get_tree_depth_of(int vertex) const {
+    if (vertex == root_vertex) return 0;
+    if (vertex < 0 || vertex >= parent_of.size()) return -1;
+    if (parent_of[vertex] == -1) return -1;
     
-    std::vector<std::vector<int>> detect_cycles_in_solution(const std::vector<DirectedEdge>& cheapest_edges, 
-                                                           int num_vertices, int root);
-
-    DirectedGraph contract_cycles(const DirectedGraph& original, 
-                                 const std::vector<std::vector<int>>& cycles,
-                                 std::vector<int>& vertex_mapping);
-
-public:
+    int depth = 0;
+    int current = vertex;
     
-    ArborescenceResult find_minimum_cost_arborescence(DirectedGraph& graph, int root_vertex);
-     
-    ArborescenceResult build_arborescence_prim_style(DirectedGraph& graph, int root_vertex);
+    while (current != root_vertex && parent_of[current] != -1) {
+        current = parent_of[current];
+        depth++;
+        if (depth > parent_of.size()) return -1;
+    }
+    return (current == root_vertex) ? depth : -1;
+}
 
-    ArborescenceResult build_segmentation_hierarchy(const WeightedGraph& mst, 
-                                                   int image_width, int image_height,
-                                                   int root_pixel);
-};
+inline bool ArborescenceResult::is_ancestor(int possible_ancestor, int descendant) const {
+    if (possible_ancestor == descendant) return true;
+    if (descendant < 0 || descendant >= parent_of.size()) return false;
+    
+    int current = descendant;
+    while (current != -1 && current != root_vertex) {
+        if (parent_of[current] == possible_ancestor) return true;
+        current = parent_of[current];
+    }
+    return false;
+}
 
-#endif 
+inline std::vector<std::vector<int>> ArborescenceResult::get_subtrees() const {
+    std::vector<std::vector<int>> subtrees;
+    std::vector<bool> visited(parent_of.size(), false);
+    
+    for (int v = 0; v < parent_of.size(); v++) {
+        if (!visited[v]) {
+            std::vector<int> subtree;
+            std::stack<int> stack;
+            stack.push(v);
+            
+            while (!stack.empty()) {
+                int current = stack.top();
+                stack.pop();
+                
+                if (!visited[current]) {
+                    visited[current] = true;
+                    subtree.push_back(current);
+                    
+                    auto children = get_children_of(current);
+                    for (int child : children) {
+                        if (!visited[child]) {
+                            stack.push(child);
+                        }
+                    }
+                }
+            }
+            
+            if (!subtree.empty()) {
+                subtrees.push_back(subtree);
+            }
+        }
+    }
+    return subtrees;
+}
+
+inline std::vector<int> ArborescenceResult::get_path_to_root(int vertex) const {
+    std::vector<int> path;
+    if (vertex < 0 || vertex >= parent_of.size()) return path;
+    
+    int current = vertex;
+    while (current != -1) {
+        path.push_back(current);
+        if (current == root_vertex) break;
+        current = parent_of[current];
+        if (path.size() > parent_of.size()) break;
+    }
+    return path;
+}
+
+inline std::vector<std::vector<std::vector<int>>> ArborescenceResult::to_ppm_matrix(
+    int width, int height, const std::vector<RGB>& original_colors) const {
+    
+    std::vector<std::vector<std::vector<int>>> result;
+    result.resize(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
+    
+    int nVerts = parent_of.size();
+    if (nVerts > width * height) nVerts = width * height;
+    
+    // Pinta cada pixel com a cor do seu ancestral (raiz do componente)
+    for (int i = 0; i < nVerts; i++) {
+        int x = i % width;
+        int y = i / width;
+        
+        // Encontra a raiz do componente subindo na árvore
+        int ancestor = i;
+        while (parent_of[ancestor] != -1) {
+            ancestor = parent_of[ancestor];
+            if (ancestor == root_vertex) break;
+        }
+        
+        // Usa cor do ancestral
+        result[y][x][0] = original_colors[ancestor].r;
+        result[y][x][1] = original_colors[ancestor].g;
+        result[y][x][2] = original_colors[ancestor].b;
+    }
+    
+    return result;
+} 
