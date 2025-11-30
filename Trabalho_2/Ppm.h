@@ -7,12 +7,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdint.h>
-
-#ifndef EDGE_H
-#define EDGE_H
 #include "edge.h"
-#endif
-
 
 struct Component {
     int root;  // Raiz do componente

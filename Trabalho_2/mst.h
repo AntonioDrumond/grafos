@@ -1,14 +1,9 @@
 #include "Graph.h"
+#include "edge.h"
 #include <queue>
 #include <stack>
 #include <unordered_map>
 #include <vector>
-
-#ifndef EDGE_H
-#define EDGE_H
-#include "edge.h"
-#endif
-
 
 struct minHeap {
 	bool operator()(const Edge& a, const Edge& b) const {

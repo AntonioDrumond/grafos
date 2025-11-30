@@ -1,3 +1,6 @@
+#ifndef ARBORESCENCE_H
+#define ARBORESCENCE_H
+
 #include "edge.h"
 #include "Graph.h"
 #include <iostream>
@@ -52,6 +55,7 @@ public:
     std::unordered_map<int, double> get_destinations_from(int vertex) const;   // Para onde o vértice aponta
     std::unordered_map<int, double> get_sources_to(int vertex) const;          // Quem aponta para o vértice
     std::vector<DirectedEdge> get_all_connections() const;                     // Todas as arestas do grafo
+    std::vector<DirectedEdge> get_minimum_undirected_edges() const;             // Pares u-v com menor custo
     
     void display() const;                                                 
     bool is_reachable(int from, int to) const;                               // Verifica se o destino é alcancável a partir da origem
@@ -186,6 +190,42 @@ inline std::vector<DirectedEdge> DirectedGraph::get_all_connections() const {
     return edges;
 }
 
+inline std::vector<DirectedEdge> DirectedGraph::get_minimum_undirected_edges() const {
+    std::vector<DirectedEdge> undirected_edges;
+
+    std::unordered_map<long long, double> min_cost;
+    min_cost.reserve(total_connections());
+
+    auto encode_pair = [](int a, int b) -> long long {
+        if (a > b) {
+            std::swap(a, b);
+        }
+        return (static_cast<long long>(a) << 32) | static_cast<unsigned int>(b);
+    };
+
+    for (int u = 0; u < current_vertices; u++) {
+        for (const auto& [v, cost] : outgoing[u]) {
+            if (u == v) {
+                continue;
+            }
+            long long key = encode_pair(u, v);
+            auto it = min_cost.find(key);
+            if (it == min_cost.end() || cost < it->second) {
+                min_cost[key] = cost;
+            }
+        }
+    }
+
+    undirected_edges.reserve(min_cost.size());
+    for (const auto& entry : min_cost) {
+        int u = static_cast<int>(entry.first >> 32);
+        int v = static_cast<int>(entry.first & 0xffffffffLL);
+        undirected_edges.emplace_back(u, v, entry.second);
+    }
+
+    return undirected_edges;
+}
+
 inline void DirectedGraph::display() const {}
 
 inline bool DirectedGraph::is_reachable(int from, int to) const {
@@ -224,7 +264,8 @@ inline DirectedGraph DirectedGraph::from_weighted_graph(const WeightedGraph& wei
         auto neighbors = graph_ref.vert_neighbors(u);
         for (const auto& [v, weights] : neighbors) {
             if (!weights.empty()) {
-                directed.connect(u, v, weights[0]);
+                double cost = *std::min_element(weights.begin(), weights.end());
+                directed.connect(u, v, cost);
             }
         }
     }
@@ -327,30 +368,34 @@ inline std::vector<int> ArborescenceResult::get_path_to_root(int vertex) const {
 
 inline std::vector<std::vector<std::vector<int>>> ArborescenceResult::to_ppm_matrix(
     int width, int height, const std::vector<RGB>& original_colors) const {
-    
-    std::vector<std::vector<std::vector<int>>> result;
-    result.resize(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
-    
-    int nVerts = parent_of.size();
-    if (nVerts > width * height) nVerts = width * height;
-    
-    // Pinta cada pixel com a cor do seu ancestral (raiz do componente)
+
+    std::vector<std::vector<std::vector<int>>> result(
+        height,
+        std::vector<std::vector<int>>(width, std::vector<int>(3))
+    );
+
+    int nVerts = static_cast<int>(parent_of.size());
+    int maxPixels = width * height;
+    if (nVerts > maxPixels) {
+        nVerts = maxPixels;
+    }
+
     for (int i = 0; i < nVerts; i++) {
+        int root = parent_of[i];
+        if (root < 0 || root >= static_cast<int>(original_colors.size())) {
+            root = i;
+        }
+
         int x = i % width;
         int y = i / width;
-        
-        // Encontra a raiz do componente subindo na árvore
-        int ancestor = i;
-        while (parent_of[ancestor] != -1) {
-            ancestor = parent_of[ancestor];
-            if (ancestor == root_vertex) break;
-        }
-        
-        // Usa cor do ancestral
-        result[y][x][0] = original_colors[ancestor].r;
-        result[y][x][1] = original_colors[ancestor].g;
-        result[y][x][2] = original_colors[ancestor].b;
+
+        const RGB& color = original_colors[root];
+        result[y][x][0] = color.r;
+        result[y][x][1] = color.g;
+        result[y][x][2] = color.b;
     }
-    
+
     return result;
-} 
+}
+
+#endif

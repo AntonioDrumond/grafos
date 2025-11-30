@@ -1,5 +1,6 @@
 #include "Ppm.h"
 #include "mst.h"
+#include "gabow.h"
 #include <ctime>
 
 double getRuntime (clock_t start, clock_t end) {
@@ -21,14 +22,18 @@ int main (int argc, char *argv[]) {
 
 //	    print_ppm(image, width, height);
 
-    WeightedGraph G = WeightedGraph::from_ppm_matrix(image, width, height, 0.0);
+    auto original_image = image;
+    auto color_graph_input = original_image;
+    color_graph_input = blurImg(color_graph_input, width, height, 3);
+
+    WeightedGraph G = WeightedGraph::from_ppm_matrix(original_image, width, height, 0.0);
 
 	clock_t grayscale = clock();
     grayscaleImg(image, width, height);
     savePPM_matrix("grayscale.ppm", image, width, height);
 
 	clock_t blur = clock();
-    image = blurImg(image, width, height, 1);
+    image = blurImg(image, width, height, 5);
     savePPM_matrix("blurred.ppm", image, width, height);
 
 	clock_t sobel_start = clock();
@@ -36,7 +41,14 @@ int main (int argc, char *argv[]) {
     savePPM_matrix("sobel.ppm", sobel, width, height);
 
     clock_t graphFromMatrix = clock();
-    WeightedGraph S = WeightedGraph::from_ppm_matrix(sobel, width, height, 0.58);
+    WeightedGraph S = WeightedGraph::from_color_and_gradient(
+        color_graph_input,
+        sobel,
+        width,
+        height,
+        1.1,
+        0.45
+    );
 
     clock_t kruskal = clock();
     WeightedGraph* T = kruskal_segmentation(G, &S, width, 1550);
@@ -47,17 +59,60 @@ int main (int argc, char *argv[]) {
     clock_t matrixFromGraph = clock();
     savePPM_matrix("result.ppm", t, width, height);
 
+    clock_t gabow_start = clock();
+    DirectedGraph directed = DirectedGraph::from_weighted_graph(S);
+    GabowAlgorithm gabow_algo;
+    ArborescenceResult gabow_result = gabow_algo.segment_image(directed, 300.0, 20);
+
+    // Recolor by component average for better visualization
+    std::unordered_map<int, std::vector<int>> comps;
+    int nverts = directed.vertex_count();
+    for (int i = 0; i < nverts; ++i) {
+        int root = gabow_result.parent_of[i];
+        comps[root].push_back(i);
+    }
+
+    auto pixColors = G.getPixColor();
+    std::unordered_map<int, RGB> avgColor;
+    for (auto &kv : comps) {
+        long long sr = 0, sg = 0, sb = 0;
+        for (int idx : kv.second) {
+            sr += pixColors[idx].r;
+            sg += pixColors[idx].g;
+            sb += pixColors[idx].b;
+        }
+        int m = (int)kv.second.size();
+        RGB c;
+        c.r = static_cast<int>(sr / m);
+        c.g = static_cast<int>(sg / m);
+        c.b = static_cast<int>(sb / m);
+        avgColor[kv.first] = c;
+    }
+
+    std::vector<std::vector<std::vector<int>>> gabow_avg(height, std::vector<std::vector<int>>(width, std::vector<int>(3)));
+    for (int i = 0; i < nverts; ++i) {
+        int root = gabow_result.parent_of[i];
+        RGB c = avgColor[root];
+        int x = i % width;
+        int y = i / width;
+        gabow_avg[y][x][0] = c.r;
+        gabow_avg[y][x][1] = c.g;
+        gabow_avg[y][x][2] = c.b;
+    }
+    savePPM_matrix("result_2.ppm", gabow_avg, width, height);
+
     clock_t end = clock();
 
     printf("Execution time:\n\n");
 	printf("Matrix From image: %lf\n", getRuntime(start, mkImage));
 	printf("Graph from matrix: %lf\n", getRuntime(mkImage, graphFromMatrix));
-	printf("-> Grayscale: %lf\n", getRuntime(grayscale, blur));
+	printf("-> Grayscale: %lf\n", getRuntime(mkImage, blur));
 	printf("-> Gaussian: %lf\n", getRuntime(blur, sobel_start));
 	printf("-> Sobel: %lf\n", getRuntime(sobel_start, graphFromMatrix));
-	printf("Graph from matrix: %lf\n", getRuntime(graphFromMatrix, kruskal));
 	printf("Kruskal: %lf\n", getRuntime(kruskal, matrixFromGraph));
-	printf("Matrix from graph: %lf\n", getRuntime(matrixFromGraph, end));
-	printf("runtime: %lf\n", getRuntime(start, end));
+	printf("Matrix from graph: %lf\n", getRuntime(matrixFromGraph, gabow_start));
+	printf("Gabow: %lf\n", getRuntime(gabow_start, end));
+	printf("\nTotal runtime Kruskal: %lf\n", getRuntime(start, gabow_start));
+	printf("Total runtime Gabow: %lf\n", getRuntime(start, mkImage) + getRuntime(mkImage, graphFromMatrix) + getRuntime(gabow_start, end));
     return 0;
 }

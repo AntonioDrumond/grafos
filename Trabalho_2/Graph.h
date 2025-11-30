@@ -1,3 +1,6 @@
+#ifndef GRAPH_H
+#define GRAPH_H
+
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -304,6 +307,73 @@ public:
                 res.add_edge(i, other, diff+w);
             }
 
+        }
+
+        return res;
+    }
+
+    static WeightedGraph from_color_and_gradient(
+        const std::vector<std::vector<std::vector<int>>> &color_img,
+        const std::vector<std::vector<std::vector<int>>> &gradient_img,
+        int width,
+        int height,
+        double color_scale,
+        double gradient_scale,
+        bool directed = false
+    ) {
+        int nVerts = width * height;
+        WeightedGraph res(nVerts, directed);
+        res.all_verts();
+
+        auto compute_gradient = [](const std::vector<int> &pixel) -> double {
+            if (pixel.empty()) {
+                return 0.0;
+            }
+            double sum_sq = 0.0;
+            for (int channel_value : pixel) {
+                sum_sq += static_cast<double>(channel_value) * static_cast<double>(channel_value);
+            }
+            double denominator = std::sqrt(static_cast<double>(std::max<size_t>(1, pixel.size()))) * 255.0;
+            if (denominator == 0.0) {
+                return 0.0;
+            }
+            return std::sqrt(sum_sq) / denominator;
+        };
+
+        for (int i = 0; i < nVerts; i++) {
+            int x = i % width;
+            int y = i / width;
+
+            bool leftEdge = x < 1;
+            bool rightEdge = x == width - 1;
+            bool underEdge = y == height - 1;
+
+            res.pix_color[i].r = color_img[y][x][0];
+            res.pix_color[i].g = color_img[y][x][1];
+            res.pix_color[i].b = color_img[y][x][2];
+
+            auto accumulate_edge = [&](int other_x, int other_y) {
+                int other = other_x + other_y * width;
+                double color_diff = rgb_diff(color_img[y][x], color_img[other_y][other_x]);
+                double grad_current = compute_gradient(gradient_img[y][x]);
+                double grad_other = compute_gradient(gradient_img[other_y][other_x]);
+                double grad_weight = (grad_current + grad_other) * 0.5 * 100.0;
+                double weight = color_scale * color_diff + gradient_scale * grad_weight;
+                res.add_edge(i, other, weight);
+            };
+
+            if (!leftEdge && !underEdge) {
+                accumulate_edge(x - 1, y + 1);
+            }
+            if (!underEdge) {
+                accumulate_edge(x, y + 1);
+            }
+            if (!underEdge && !rightEdge) {
+                accumulate_edge(x + 1, y + 1);
+            }
+            if (!rightEdge) {
+                accumulate_edge(x + 1, y);
+            }
         }
 
         return res;
@@ -617,4 +687,7 @@ public:
     }
 
 };
+
+#endif
+
 
