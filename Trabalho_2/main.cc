@@ -79,7 +79,10 @@ int main (int argc, char *argv[]) {
             sg += pixColors[idx].g;
             sb += pixColors[idx].b;
         }
-        int m = (int)kv.second.size();
+        int m = static_cast<int>(kv.second.size());
+        if (m == 0) {
+            continue;
+        }
         RGB c;
         c.r = static_cast<int>(sr / m);
         c.g = static_cast<int>(sg / m);
