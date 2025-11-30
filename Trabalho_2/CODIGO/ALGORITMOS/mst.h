@@ -56,7 +56,7 @@ WeightedGraph* kruskal_segmentation (WeightedGraph G, WeightedGraph* S, int widt
 	T->all_verts();
 	T->setPixColor(S->getPixColor());
 
-	int union_find [3][vert_n];
+	std::vector<std::vector<int>> union_find(3, std::vector<int>(vert_n));
 	for (int i = 0; i < vert_n; i++) {
 		union_find[0][i] = i; // ancestor
 		union_find[1][i] = 1; // rank
