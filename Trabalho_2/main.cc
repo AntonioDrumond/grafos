@@ -1,6 +1,6 @@
-#include "Ppm.h"
-#include "mst.h"
-#include "edmonds.h"
+#include "CODIGO/OUTROS/Ppm.h"
+#include "CODIGO/ALGORITMOS/mst.h"
+#include "CODIGO/ALGORITMOS/edmonds.h"
 #include <ctime>
 
 double getRuntime (clock_t start, clock_t end) {
@@ -16,7 +16,7 @@ int main (int argc, char *argv[]) {
         std::cout<< "nao foi possivel abrir a imagem"<<std::endl;
 
     }
-    clock_t mkImage = clock();
+    clock_t after_image_load = clock();
     // std::cout<< "valor da largura: "<<width<<std::endl;
     // std::cout<< "valor da altura: "<<height<<std::endl;
 
@@ -28,19 +28,18 @@ int main (int argc, char *argv[]) {
 
     WeightedGraph G = WeightedGraph::from_ppm_matrix(original_image, width, height, 0.0);
 
-	clock_t grayscale = clock();
-    grayscaleImg(image, width, height);
+	grayscaleImg(image, width, height);
     savePPM_matrix("grayscale.ppm", image, width, height);
+	clock_t after_grayscale = clock();
 
-	clock_t blur = clock();
     image = blurImg(image, width, height, 5);
     savePPM_matrix("blurred.ppm", image, width, height);
+	clock_t after_blur = clock();
 
-	clock_t sobel_start = clock();
 	std::vector<std::vector<std::vector<int>>> sobel = sobelOperator(image, width, height);
     savePPM_matrix("sobel.ppm", sobel, width, height);
+	clock_t after_sobel = clock();
 
-    clock_t graphFromMatrix = clock();
     WeightedGraph S = WeightedGraph::from_color_and_gradient(
         color_graph_input,
         sobel,
@@ -49,17 +48,16 @@ int main (int argc, char *argv[]) {
         1.1,
         0.45
     );
+    clock_t after_graph_from_matrix = clock();
 
-    clock_t kruskal = clock();
     WeightedGraph* T = kruskal_segmentation(G, &S, width, 1550);
-
 //	    T->avg_colors_components();
     auto t = T->to_ppm_matrix(width, height);
+    clock_t after_kruskal = clock();
 
-    clock_t matrixFromGraph = clock();
     savePPM_matrix("result.ppm", t, width, height);
+    clock_t after_matrix_from_graph = clock();
 
-    clock_t edmonds_start = clock();
     DirectedGraph directed = DirectedGraph::from_weighted_graph(S);
     EdmondsAlgorithm edmonds_algo;
     ArborescenceResult edmonds_result = edmonds_algo.segment_image(directed, 300.0, 20);
@@ -101,18 +99,25 @@ int main (int argc, char *argv[]) {
     }
     savePPM_matrix("result_2.ppm", edmonds_avg, width, height);
 
-    clock_t end = clock();
+    clock_t finish = clock();
+
+    double time_matrix_from_image = getRuntime(start, after_image_load);
+    double time_grayscale = getRuntime(after_image_load, after_grayscale);
+    double time_gaussian = getRuntime(after_grayscale, after_blur);
+    double time_sobel = getRuntime(after_blur, after_sobel);
+    double time_graph_from_matrix = getRuntime(after_sobel, after_graph_from_matrix);
+    double time_kruskal = getRuntime(after_graph_from_matrix, after_kruskal);
+    double time_matrix_from_graph = getRuntime(after_kruskal, after_matrix_from_graph);
+    double time_edmonds = getRuntime(after_matrix_from_graph, finish);
 
     printf("Execution time:\n\n");
-	printf("Matrix From image: %lf\n", getRuntime(start, mkImage));
-	printf("Graph from matrix: %lf\n", getRuntime(mkImage, graphFromMatrix));
-	printf("-> Grayscale: %lf\n", getRuntime(mkImage, blur));
-	printf("-> Gaussian: %lf\n", getRuntime(blur, sobel_start));
-	printf("-> Sobel: %lf\n", getRuntime(sobel_start, graphFromMatrix));
-	printf("Kruskal: %lf\n", getRuntime(kruskal, matrixFromGraph));
-	printf("Matrix from graph: %lf\n", getRuntime(matrixFromGraph, edmonds_start));
-    printf("Edmonds: %lf\n", getRuntime(edmonds_start, end));
-	printf("\nTotal runtime Kruskal: %lf\n", getRuntime(start, edmonds_start));
-    printf("Total runtime Edmonds: %lf\n", getRuntime(start, mkImage) + getRuntime(mkImage, graphFromMatrix) + getRuntime(edmonds_start, end));
+	printf("Matrix from image: %lf\n", time_matrix_from_image);
+	printf("-> Grayscale: %lf\n", time_grayscale);
+	printf("-> Gaussian: %lf\n", time_gaussian);
+	printf("-> Sobel: %lf\n", time_sobel);
+	printf("Graph from matrix: %lf\n", time_graph_from_matrix);
+	printf("Kruskal: %lf\n", time_kruskal);
+	printf("Matrix from graph: %lf\n", time_matrix_from_graph);
+    printf("Edmonds: %lf\n", time_edmonds);
     return 0;
 }

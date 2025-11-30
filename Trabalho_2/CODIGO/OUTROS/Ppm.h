@@ -7,7 +7,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdint.h>
-#include "edge.h"
+#include "../GRAFO/edge.h"
 
 struct Component {
     int root;  // Raiz do componente

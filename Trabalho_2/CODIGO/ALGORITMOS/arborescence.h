@@ -1,8 +1,8 @@
 #ifndef ARBORESCENCE_H
 #define ARBORESCENCE_H
 
-#include "edge.h"
-#include "Graph.h"
+#include "../GRAFO/edge.h"
+#include "../GRAFO/Graph.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
