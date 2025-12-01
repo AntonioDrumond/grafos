@@ -1,7 +1,7 @@
-#include "CODIGO/GRAFO/Graph.h"
-#include "CODIGO/OUTROS/Ppm.h"
-#include "CODIGO/ALGORITMOS/tarjan.h"
-#include "CODIGO/ALGORITMOS/gabow.h"
+#include "graph/Graph.h"
+#include "util/Ppm.h"
+#include "lib/tarjan.h"
+#include "lib/gabow.h"
 #include <chrono>
 #include <cmath>
 #include <cstring>

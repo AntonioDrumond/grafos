@@ -7,7 +7,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <stdint.h>
-#include "../GRAFO/edge.h"
+#include "../graph/edge.h"
 
 bool loadPPM(
     const std::string &filename, 

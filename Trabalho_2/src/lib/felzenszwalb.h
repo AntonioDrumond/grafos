@@ -1,5 +1,5 @@
-#include "../GRAFO/Graph.h"
-#include "../GRAFO/edge.h"
+#include "../graph/Graph.h"
+#include "../graph/edge.h"
 #include <queue>
 #include <stack>
 #include <unordered_map>
