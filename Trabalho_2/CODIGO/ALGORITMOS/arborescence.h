@@ -277,7 +277,7 @@ inline void ArborescenceResult::display_tree() const {}
 
 inline std::vector<int> ArborescenceResult::get_children_of(int vertex) const {
     std::vector<int> children;
-    for (int v = 0; v < parent_of.size(); v++) {
+    for (int v = 0; v < (int)parent_of.size(); v++) {
         if (parent_of[v] == vertex) {
             children.push_back(v);
         }
@@ -287,7 +287,7 @@ inline std::vector<int> ArborescenceResult::get_children_of(int vertex) const {
 
 inline int ArborescenceResult::get_tree_depth_of(int vertex) const {
     if (vertex == root_vertex) return 0;
-    if (vertex < 0 || vertex >= parent_of.size()) return -1;
+    if (vertex < 0 || vertex >= (int)parent_of.size()) return -1;
     if (parent_of[vertex] == -1) return -1;
     
     int depth = 0;
@@ -296,14 +296,14 @@ inline int ArborescenceResult::get_tree_depth_of(int vertex) const {
     while (current != root_vertex && parent_of[current] != -1) {
         current = parent_of[current];
         depth++;
-        if (depth > parent_of.size()) return -1;
+        if (depth > (int)parent_of.size()) return -1;
     }
     return (current == root_vertex) ? depth : -1;
 }
 
 inline bool ArborescenceResult::is_ancestor(int possible_ancestor, int descendant) const {
     if (possible_ancestor == descendant) return true;
-    if (descendant < 0 || descendant >= parent_of.size()) return false;
+    if (descendant < 0 || descendant >= (int)parent_of.size()) return false;
     
     int current = descendant;
     while (current != -1 && current != root_vertex) {
@@ -317,7 +317,7 @@ inline std::vector<std::vector<int>> ArborescenceResult::get_subtrees() const {
     std::vector<std::vector<int>> subtrees;
     std::vector<bool> visited(parent_of.size(), false);
     
-    for (int v = 0; v < parent_of.size(); v++) {
+    for (int v = 0; v < (int)parent_of.size(); v++) {
         if (!visited[v]) {
             std::vector<int> subtree;
             std::stack<int> stack;
@@ -350,7 +350,7 @@ inline std::vector<std::vector<int>> ArborescenceResult::get_subtrees() const {
 
 inline std::vector<int> ArborescenceResult::get_path_to_root(int vertex) const {
     std::vector<int> path;
-    if (vertex < 0 || vertex >= parent_of.size()) return path;
+    if (vertex < 0 || vertex >= (int)parent_of.size()) return path;
     
     int current = vertex;
     while (current != -1) {
