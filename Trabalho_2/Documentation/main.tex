@@ -1,0 +1,344 @@
+\documentclass{sbc2023}%
+
+\usepackage[portuguese]{babel}
+\selectlanguage{portuguese}
+
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[misc,geometry]{ifsym} 
+\usepackage{fontspec}
+\usepackage{fontawesome}
+\usepackage{academicons}
+\usepackage{color}
+\usepackage{hyperref} 
+\usepackage{aas_macros}
+\usepackage[bottom]{footmisc}
+\usepackage{supertabular}
+\usepackage{afterpage}
+\usepackage{url}
+\usepackage{pifont}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{booktabs} 
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{subcaption}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true
+}
+\usepackage{graphicx} 
+\usepackage{caption}  
+
+\setcitestyle{square}
+
+\definecolor{orcidlogo}{rgb}{0.37,0.48,0.13}
+\definecolor{unilogo}{rgb}{0.16, 0.26, 0.58}
+\definecolor{maillogo}{rgb}{0.58, 0.16, 0.26}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.0}
+\hypersetup{colorlinks,breaklinks,
+            linkcolor=darkblue,urlcolor=darkblue,
+            anchorcolor=darkblue,citecolor=darkblue}
+%\hypersetup{colorlinks,citecolor=blue,linkcolor=blue,urlcolor=blue}
+
+%%%%%%% IMPORTANT: We disable hyperlinks by default with this line, to avoid the error "\pdfendlink ended up in different nesting level" while writing.
+%\hypersetup{draft}
+
+\jid{JBCS}
+\jtitle{Trabalho da disciplina Teoria de Grafos e Computabilidade  }
+\doi{}
+\jyear{}
+
+
+\title[Implementação em C++ e comparação experimental]{Segmentação de Imagens por Grafos: Árvores Geradoras Mínimas e Arborescências}
+
+% THE ORCID IS MANDATORY FOR EACH AUTHOR IN JBCS
+\author[]{
+
+\affil{\textbf{Vitor de Meira Gomes}~
+\href{https://orcid.org/0009-0004-6255-2406}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:vitormeiragomes@outlook.com}{\textbf{\textit{vitormeiragomes@outlook.com}}}~]}
+
+\affil{\textbf{Antônio Drumond Cota de Sousa}~
+\href{https://orcid.org/0009-0009-2053-8151}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:antonio.drumondcs@gmail.com}{\textbf{\textit{antonio.drumondcs@gmail.com}}}~]}
+
+\affil{\textbf{Achille Guérard}~
+\href{https://orcid.org/0000-0000-0000-0000}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas/EPITA}~|~\href{mailto:achille.guerard15@gmail.com}{\textbf{\textit{achille.guerard15@gmail.com}}}~]}
+
+\affil{\textbf{Laura Menezes Heráclito Alves}~
+\href{https://orcid.org/0009-0009-1718-8250}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:laura.heraclito@gmail.com}{\textbf{\textit{laura.heraclito@gmail.com}}}~]}
+
+\affil{\textbf{Davi Ferreira Puddo}~
+\href{https://orcid.org/0009-0002-7023-1034}{\textcolor{orcidlogo}{\aiOrcid}}~
+\textcolor{blue}{\faEnvelopeO}~~[~\textbf{PUC Minas}~|~\href{mailto:davifpuddo@gmail.com}{\textbf{\textit{davifpuddo@gmail.com}}}~]}
+}
+
+
+\begin{document}
+
+\begin{frontmatter}
+\maketitle
+
+\begin{mail}
+Pontifícia Universidade Católica de Minas Gerais, R. Dom José Gaspar, 500, Coração Eucarístico, 30535-901, Belo Horizonte, MG, Brazil.
+\end{mail}
+
+
+\begin{abstract}
+\textbf{Abstract.~}
+\noindent Este trabalho apresenta um estudo prático de segmentação de imagens baseado em modelagem por grafos, com ênfase na comparação entre métodos fundamentados em árvores geradoras mínimas e arborescências direcionadas. A imagem é representada como um grafo ponderado cujos vértices correspondem a pixels e cujas arestas capturam dissimilaridades derivadas de cor e gradiente após etapas de pré-processamento (conversão para tons de cinza, suavização Gaussiana e operador de Sobel).
+\end{abstract}
+
+\begin{keywords}
+Segmentação de Imagens; Grafos; Árvores Geradoras Mínimas; Arborescências; Algoritmo de Felzenszwalb; Algoritmo de Chu–Liu/Edmonds; Processamento Digital de Imagens; C++; Pré-processamento
+\end{keywords}
+
+%\begin{license}
+%Published under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0)
+%\end{license}
+
+\end{frontmatter}
+
+
+\section{Introdução}
+\label{sec:intro}
+
+A segmentação de imagens pode ser formulada de maneira natural por meio de grafos, nos quais cada pixel corresponde a um vértice e suas vizinhanças definem arestas ponderadas por medidas de dissimilaridade. Essa modelagem permite explorar algoritmos clássicos de particionamento que utilizam estruturas de árvores geradoras mínimas e arborescências direcionadas, conforme previsto no escopo deste trabalho. Dada uma imagem de entrada, aplica-se um conjunto de transformações preliminares, composto por conversão para tons de cinza, suavização e cálculo de gradientes, com o objetivo de extrair atributos relevantes à construção do grafo. Em seguida, o grafo ponderado resultante combina diferenças de cor e intensidade de gradiente para definir pesos que capturam transições estruturais significativas na imagem. Sobre essa estrutura são implementados dois métodos complementares de segmentação: (i) um procedimento baseado em Kruskal e no critério de fusão proposto por Felzenszwalb e Huttenlocher, que utiliza propriedades da árvore geradora mínima para agrupar pixels de acordo com coerência interna de cor e fronteiras definidas por pesos; e (ii) uma abordagem fundamentada em arborescências, inspirada no algoritmo de \cite{edmonds1967optimum}, que resolve ciclos por meio de contrações sucessivas para obter uma árvore mínima enraizada e, a partir dela, componentes segmentados. As duas técnicas permitem comparar, de forma experimental, diferenças estruturais entre métodos tradicionais para grafos.
+
+
+\section{Referencial Teórico}
+
+Esta seção apresenta os fundamentos que sustentam a modelagem por grafos aplicada à segmentação de imagens. Inicialmente descrevemos como a imagem é representada como grafo e como são definidos os pesos das arestas. Em seguida, discutimos dois paradigmas centrais neste trabalho: os métodos baseados em árvores geradoras mínimas, com ênfase no critério de Felzenszwalb e Huttenlocher, e as abordagens por arborescências mínimas segundo Edmonds.
+
+\subsection{Modelagem por Grafos}
+
+Em uma formulação baseada em grafos, cada pixel da imagem é representado por um vértice do grafo $G=(V,E)$, e cada vértice (exceto aqueles nas beiradas da imagem) será conectado a oito vizinhos, sendo quatro arestas para os pixels à direita, esquerda, cima e baixo do vértice, e mais quatro para as diagonais entre essas direções principais. O peso $w(u,v)$ associado a cada aresta quantifica a dissimilaridade entre dois pixels e pode ser definida pela seguinte fórmula: 
+$$w = \sqrt{(v1_r-v2_r)^2 + (v1_g-v2_g)^2 + (v1_b-v2_b)^2}$$
+Sendo $v1$ e $v2$ os pixels (vértices) comparados e $_r, _g, _b$ seus canais de cor \textit{red, green} e \textit{blue}.
+
+
+Etapas de pré-processamento, como suavização Gaussiana, cálculo do gradiente e conversão para tons de cinza quando adequado, reduzem o ruído da imagem e tornam os pesos mais discriminativos, levando à criação de segmentos mais uniformes e bem demarcados.
+
+\subsection{Método de Felzenszwalb}
+
+O método de Felzenszwalb e Huttenlocher\cite{felzenszwalb2004efficient} utiliza uma estratégia de união de componentes semelhante ao algoritmo de Kruskal, processando as arestas em ordem crescente de peso. Para cada componente $C$, define-se a \emph{diferença interna}, denotada por $\mathrm{Int}(C)$, que corresponde ao maior peso da árvore geradora mínima restrita a $C$.
+
+A condição de fusão entre dois componentes $C_1$ e $C_2$ dado dois vértice $(u,v)$, um em cada componente, com a aresta de menor de peso $w(u,v)$ entre $C_1$ e $C_2$ é dada por:
+\begin{equation}
+\begin{aligned}
+w(u,v) &\le \mathrm{MInt}(C_1,C_2),\\[2pt]
+\mathrm{MInt}(C_1,C_2)
+&=
+\min\!\Bigl(
+\mathrm{Int}(C_1)+\tfrac{k}{|C_1|},\ 
+\mathrm{Int}(C_2)+\tfrac{k}{|C_2|}
+\Bigr),
+\end{aligned}
+\label{eq:felzenszwalb}
+\end{equation}
+onde $k>0$ é um parâmetro de escala que controla a tendência à fusão, favorecendo componentes maiores para valores mais elevados.
+
+O algoritmo mantém estrutura Union--Find para operações de união, resultando em custo quase linear após a ordenação das arestas ($O(|E|\log |E|)$). Entre as limitações práticas destacam-se a sensibilidade ao parâmetro $k$ e a dificuldade em preservar contornos finos em regiões de baixo contraste, o que motiva combinar diferenças de cor e gradiente e aplicar pós-processamentos para eliminar componentes muito pequenos.
+
+\subsection{Arborescências Mínimas: Edmonds}
+
+Arborescências mínimas tratam grafos direcionados e buscam uma árvore enraizada de custo mínimo que alcance todos os vértices. O algoritmo de Edmonds constrói essa estrutura selecionando, para cada vértice (exceto a raiz), a aresta de menor custo incidente. A presença de ciclos é resolvida por contrações sucessivas, seguidas da reconstrução da estrutura final. A forma clássica apresenta complexidade $O(|V|\cdot|E|)$, concentrada nas etapas de detecção e contração de ciclos. Variações posteriores, como as de Gabow, reduzem o custo prático e tornam o método utilizável em grafos moderados.
+
+Para aplicação em segmentação, o grafo originalmente não direcionado pode ser convertido em grafo direcionado, por exemplo atribuindo a cada par $u$--$v$ a direção correspondente ao menor peso. Essa representação permite construir hierarquias de segmentação baseadas em estruturas enraizadas. As vantagens incluem a capacidade de modelar dependências direcionais e relações hierárquicas entre regiões; entretanto, o custo computacional das etapas de contração exige otimizações, restrição do número de arestas ou uso de aproximações em imagens muito grandes.
+
+
+\section{Implementação}
+
+O pipeline implementado é composto pelas seguintes etapas: leitura da imagem em formato PPM; pré-processamento (conversão opcional para tons de cinza, suavização Gaussiana e cálculo do gradiente via Sobel); construção do grafo ponderado; aplicação dos métodos de segmentação (MST/Felzenszwalb e Arborescência/Edmonds); pós-processamento e recoloração; e escrita das imagens segmentadas. A implementação utiliza representação local de vizinhança (arestas 8-adjacentes) e pesos que combinam diferença de cor e magnitude do gradiente.
+
+\subsection{Detalhes da Implementação}
+
+O projeto foi desenvolvido inteiramente em C++, com foco em desempenho e gestão direta de memória, requisito importante para aplicações de processamento de imagens. O código está organizado em módulos que separam claramente: entrada/saída e pré-processamento, construção de grafos ponderados, algoritmos de segmentação (baseados em MST/Kruskal e em arborescências) e funções utilitárias.
+
+\subsubsection{Estrutura do Projeto}
+
+A estrutura modular do código inclui as seguintes responsabilidades principais:
+\begin{itemize}
+    \item \textbf{\texttt{Ppm.h}}: leitura e escrita do formato PPM, filtros de pré-processamento (grayscale, Gaussian blur, Sobel), utilitários para salvar imagens segmentadas por rótulo e rotina auxiliar de segmentação baseada em lista de arestas.
+    \item \textbf{\texttt{Graph.h}}: definição das classes de grafo (não direcionado e ponderado), representação de pixels em RGB, construção de grafos a partir de matrizes PPM (\texttt{from\_ppm\_matrix}) ou de cor + gradiente (\texttt{from\_color\_and\_gradient}) e métodos para converter o grafo de volta para matriz PPM (\texttt{to\_ppm\_matrix}).
+    \item \textbf{\texttt{felzenszwalb.h}}: implementação do procedimento de Kruskal adaptado para segmentação (critério de Felzenszwalb), com estrutura de heap mínimo para ordenação de arestas e uma estrutura Union--Find especializada para gerir componentes e diferenças internas.
+    \item \textbf{\texttt{arborescence.h}} e \textbf{\texttt{edmunds.h}}: definição de \texttt{DirectedGraph}, estruturas de arestas direcionadas, representação do resultado de arborescência e classe \texttt{EdmondsAlgorithm}, que implementa a versão utilizada para hierarquias e segmentação baseada em arborescências.
+    \item \textbf{\texttt{main.cc}}: orquestra o pipeline experimental, aplicando pré-processamento, criando os grafos, executando \texttt{kruskal\_segmentation} e o algoritmo de Edmund, recolorindo componentes e gravando as imagens de saída.
+\end{itemize}
+
+\subsubsection{Especificações da Implementação MST (Felzenszwalb)}
+
+A implementação do método baseado em Felzenszwalb e Huttenlocher \cite{felzenszwalb2004efficient} segue a ideia clássica de ordenar arestas e unir componentes segundo um critério adaptativo.
+
+Fluxo principal:
+\begin{enumerate}
+    \item Construção das arestas: para cada pixel $i$ são consideradas adjacências locais (incluindo diagonais quando aplicável). Para cada vizinho $j$ calcula-se a diferença de cor (ou combinação cor+gradiente) e gera-se uma aresta $(i,j,w)$.
+    \item Ordenação: todas as arestas são inseridas em uma \texttt{priority\_queue} (min-heap) e processadas em ordem crescente de peso.
+    \item Estrutura Union--Find: utiliza-se uma tabela interna com vetores paralelos para ancestral, rank/tamanho e diferença interna para cada vértice, permitindo encontrar a raiz, unir por rank e manter $\mathrm{Int}(C)$ (diferença interna) de cada componente.
+    \item Regra de fusão: para uma aresta de peso $w$ que conecta componentes $C_1$ e $C_2$, calcula-se
+    \begin{equation}
+    \small
+    \mathrm{MInt}(C_1,C_2)
+    =
+    \min\!\bigl(
+      \mathrm{Int}(C_1)+k/|C_1|,
+      \mathrm{Int}(C_2)+k/|C_2|
+    \bigr),
+    \end{equation}
+    e efetua-se a fusão se $w \le \mathrm{MInt}(C_1,C_2)$. Na fusão, atualizam-se ancestral, rank e $\mathrm{Int}$ do componente resultante.
+    \item Construção do resultado: as arestas aceitas compõem a estrutura de saída. Em seguida, cada vértice é recolorido de acordo com o representante de sua componente, preservando as cores originais para facilitar a visualização.
+\end{enumerate}
+
+Notas de implementação:
+\begin{itemize}
+    \item A construção das arestas explora a topologia regular da imagem (indexação linear com uso da \texttt{width} para calcular vizinhanças), reduzindo custo e complexidade de iteração.
+    \item A ordenação de arestas é a etapa dominante em custo, com complexidade prática $O(|E|\log|E|)$; as operações de união e busca em Union--Find têm custo amortizado quase linear.
+    \item A informação de cor original é preservada para a fase final de recoloração dos componentes, produzindo resultados visualmente interpretáveis.
+\end{itemize}
+
+\subsubsection{Especificação da implementação do Algoritmo de Edmonds}
+
+O algoritmo de Edmonds \cite{edmonds1967optimum} foi utilizado para gerar uma Arborescência Geradora Mínima, garantindo conectividade a partir de uma raiz com o menor custo acumulado, antes de segmentá-la.
+
+Principais aspectos:
+\begin{itemize}
+    \item Seleção Gulosa: a etapa inicial itera sobre todos os vértices (exceto a raiz) para selecionar a aresta incidente de menor peso. Funções auxiliares validam se esse subgrafo preliminar é acíclico; caso positivo, a solução ótima é retornada imediatamente.
+    \item Contração de Ciclos: diferentemente de abordagens para grafos não direcionados, quando um ciclo é detectado, o algoritmo o condensa em um \textit{super-vértice}. As arestas externas que incidem no ciclo são reponderadas (\texttt{reweighting}) para refletir o custo marginal de substituir uma aresta interna do ciclo por uma externa.
+    \item Expansão e Reconstrução: após a resolução recursiva no grafo contraído, o módulo realiza a etapa de expansão (\texttt{unrolling}). O super-vértice é desfeito e o ciclo original é "quebrado" removendo-se a aresta interna que conflita com a conexão externa escolhida, restaurando a topologia válida.
+    \item Integridade Estrutural: o método assegura que cada nó possua exatamente um pai (exceto a raiz), sendo fundamental para aplicações que exigem hierarquias estritas de dependência ou fluxo direcionado sem retornos.
+\end{itemize}
+
+\subsubsection{Métodos de Pré-processamento}
+Antes da construção do grafo ponderado, a imagem passa por uma sequência de transformações que visam reduzir ruído, destacar características estruturais e melhorar a discriminação entre regiões durante a segmentação. 
+
+\paragraph{Conversão para Escala de Cinza}
+
+A conversão para tons de cinza elimina a informação de cromaticidade, reduzindo a dimensionalidade dos dados de três canais RGB para um único canal de intensidade. A conversão implementada utiliza a média aritmética dos três canais:
+\begin{equation}
+\small
+I_{\text{gray}}(x,y) = \frac{R(x,y) + G(x,y) + B(x,y)}{3},
+\end{equation}
+onde $R$, $G$ e $B$ representam os valores dos canais vermelho, verde e azul, respectivamente. 
+
+\paragraph{Suavização Gaussiana}
+
+A suavização Gaussiana \cite{hipr2_gsmooth} reduz flutuações de alta frequência causadas por ruído de aquisição ou compressão. A implementação utiliza um kernel discreto de convolução $3\times3$ com distribuição de pesos proporcional à função Gaussiana:
+\begin{equation}
+\small
+G(x,y) = \frac{1}{16}
+\begin{bmatrix}
+1 & 2 & 1 \\
+2 & 4 & 2 \\
+1 & 2 & 1
+\end{bmatrix}.
+\end{equation}
+A aplicação iterativa (controlada pelo parâmetro \texttt{passes}) permite ajustar o grau de suavização: valores maiores produzem imagens mais homogêneas, adequadas para segmentações em larga escala, enquanto valores menores preservam detalhes finos. 
+
+\paragraph{Detecção de Bordas: Operador de Sobel}
+
+O operador de Sobel estima o gradiente local de intensidade, evidenciando transições abruptas que correspondem a fronteiras entre regiões. O método calcula aproximações das derivadas parciais nas direções horizontal e vertical utilizando dois kernels de convolução $3\times3$:
+\begin{equation}
+\small
+G_x = 
+\begin{bmatrix}
+-1 & 0 & +1 \\
+-2 & 0 & +2 \\
+-1 & 0 & +1
+\end{bmatrix}, \quad
+G_y = 
+\begin{bmatrix}
+-1 & -2 & -1 \\
+ 0 &  0 &  0 \\
++1 & +2 & +1
+\end{bmatrix}.
+\end{equation}
+A magnitude do gradiente em cada pixel $(x,y)$ é obtida por:
+\begin{equation}
+\small
+|\nabla I(x,y)| = \sqrt{G_x^2 + G_y^2}.
+\end{equation}
+Regiões com gradiente elevado indicam fronteiras potenciais, enquanto regiões de gradiente baixo sugerem homogeneidade interna.
+
+\paragraph{Construção do Grafo com Ponderação Combinada}
+
+Após o pré-processamento, dois grafos são construídos: um baseado exclusivamente em diferenças de cor (a partir da imagem original suavizada) e outro combinando cor e informação de gradiente. A função \texttt{from\_color\_and\_gradient} implementa a ponderação híbrida:
+\begin{equation}
+\small
+w(u,v) = \alpha \cdot \|C(u) - C(v)\|_2 + \beta \cdot \frac{|\nabla I(u)| + |\nabla I(v)|}{2},
+\end{equation}
+onde $C(u)$ e $C(v)$ representam os vetores RGB dos pixels $u$ e $v$, $\|\cdot\|_2$ denota a distância euclidiana no espaço de cor, $|\nabla I|$ é a magnitude do gradiente e $\alpha$, $\beta$ são coeficientes de escala. 
+
+\section{Resultados dos Testes}
+\label{sec:results}
+\begin{figure}[H]
+    \centering
+        \begin{subfigure}[b]{0.25\textwidth}
+            \includegraphics[width=\textwidth]{img/input.png}
+            \caption{Original Image, no filters or changes applied.}
+            \label{fig:original}
+        \end{subfigure}
+    \hfill
+        \begin{subfigure}[b]{0.25\textwidth}
+            \includegraphics[width=\textwidth]{img/sobel.png}
+            \caption{Sobel operator applied.}
+            \label{fig:sobel}
+        \end{subfigure}
+    \hfill
+        \begin{subfigure}[b]{0.25\textwidth}
+            \includegraphics[width=\textwidth]{img/felzenzswalb.png}
+            \caption{Felzenszwalb's Segmentation.}
+            \label{fig:cfelzenswalb}
+        \end{subfigure}
+    \hfill
+        \begin{subfigure}[b]{0.25\textwidth}
+            \includegraphics[width=\textwidth]{img/edmonds.png}
+            \caption{Edmond's Segmentation.}
+            \label{fig:edmonds}
+        \end{subfigure}
+        
+    \caption{Comparison of segmentation results. Image (a) is the original. Image (b) shows the result of Felzenszwalb's algorithm. Image (c) is the result of Edmond's algorithm, and (d) the image with the Sobel Operator applied, which was used to highlight edges in the image.}
+    \label{fig:comparison_image}
+\end{figure}
+
+O algoritmo de Felzenzwalb \cite{felzenszwalb2004efficient}, que opera sobre grafos não direcionados e o algoritmo de Edmonds, que opera sobre grafos direcionados, foram ambos utilizados para segmentar a imagem, e os resultados alcançados por eles são visualmente diferentes. A imagem gerada pelo algoritmo de Felzenzwalb, por exemplo, preserva melhor as sombras da imagem, e gera mais segmentos. A imagem gerada pelo algoritmo de Edmonds \cite{edmonds1967optimum}, por outro lado, é visualmente mais "uniforme", possivelmente devido pela segmentação pela média de cores dos vizinhos da área analizada. Isso implica também eum uma menor "saturação" o que torna a imagem menos colorida. Por fim, o Felzenzwalb acabou por ter uma imagem melhor segmentada, mesmo os resultados da arborescência sendo mais consisos e homogêneos.
+
+
+\section{Conclusão}
+Como visto durante o artigo, e durante a análise das imagens, é possível notar que a principal diferença visual entre os métodos é a escolha das cores de cada componente, devido ao critério de seleção de cada algoritmo, com o método de Felzenswalb sendo levemente mais segmentado, quando fornecidos com os mesmos parâmetros. O uso de grafos direcionados para a segmentação de imagens apresenta resultados mais significativos, quando comparado com grafos não-direcionados, principalmente em situações onde há a necessidade de destacar uma direção ou gradiente, fazendo com que o caso apresentado durante o artigo, a segmentação de componentes de cores próximas, não apresente diferenças relevantes entre os algoritmos.
+
+
+\section*{Declarações}
+
+\begin{contributions}
+\begin{itemize}
+    \item \textbf{Laura Menezes heráclito Alves:} Implementação segmentação de imagens por Arborescência.
+    \item \textbf{Vitor de Meira Comes:} Descrição do artigo e pesquisa de artigos e bases teóricas.
+    \item \textbf{Antônio Drumond Cota de Sousa:} Implementação da estrutura de grafos a partir do arquivo de imagem e etapas de pré-processamento.
+    \item \textbf{Achille Guérard:} Descrição do artigo e apoio técnico
+    \item \textbf{Davi Ferreira Puddo:} Implementação segmentação por Árvore Geradora Mínima.
+\end{itemize}
+
+\end{contributions}
+
+\begin{materials}
+O código desenvolvido está disponibilizado abertamente no seguinte repositório do GitHub:
+
+\href{https://github.com/AntonioDrumond/grafos/tree/main/Trabalho_2}{https://github.com/AntonioDrumond/grafos/tree/main/Trabalho\_2}
+\end{materials}
+
+
+\bibliographystyle{apalike-sol}
+\bibliography{refs}
+
+\end{document}
