@@ -214,7 +214,7 @@ void savePPM_matrix(
     const std::vector<std::vector<std::vector<int>>> &image,
     int width, int height
 ) {
-    std::ofstream file(filename);
+    std::ofstream file(filename, std::ios::binary);
     
     file << "P6\n";
     // file << "# Segmented Image\n";

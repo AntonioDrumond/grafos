@@ -86,10 +86,6 @@ struct ArborescenceResult {
         int width, int height, const std::vector<RGB>& original_colors) const;
 };
 
-// ============================================================================
-// IMPLEMENTAÇÕES INLINE
-// ============================================================================
-
 // DirectedEdge
 inline DirectedEdge::DirectedEdge() : source(-1), target(-1), cost(0.0) {}
 
